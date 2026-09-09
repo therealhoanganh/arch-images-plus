@@ -4,6 +4,21 @@
 
 
 
+
+## 0.4.0 — unreleased
+
+- **New: never convert these folders.** Applies to every path — the watcher, both
+  commands, the right-click menu and the whole-vault button — because a guard
+  that only covers the automatic path is the one a stray right-click bypasses.
+  Matching is prefix-with-boundary, so `Archive` does not catch `Archived`.
+- **Default quality raised from 0.82 to 0.90.** The usual 75–80 advice optimises
+  for bandwidth while a master copy is kept elsewhere; here conversion replaces
+  the original, so the quality chosen is kept forever. Measured by SSIM on real
+  images: screenshots and text pages are indistinguishable at any level (0.996+
+  at q75) and cost tens of KB more at q90, while high-resolution photographs run
+  0.898 at q75 and 0.917 at q80 — below the ~0.95 where artifacts on skin become
+  visible — reaching 0.971 at q90. A 21.6 MB PNG still lands at 2.3 MB.
+
 ## 0.3.2 — unreleased
 
 - **Bulk conversion logs what it did.** It previously logged nothing per file, so

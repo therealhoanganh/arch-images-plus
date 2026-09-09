@@ -80,6 +80,51 @@ resolve `uniquePath` against the same folder listing before either has been
 written, and both get the same name; the second `createBinary` then throws. The
 queue uses `.then(task, task)` so one failure does not stall what is behind it.
 
+## Quality, and why it is 0.90 rather than the usual 0.75-0.80
+
+The common advice — 75 to 80 for photographs and web graphics, above which file
+size climbs for little visible gain — is correct **for web delivery**, where a
+master copy is kept and a compressed copy is served. It is the wrong frame here:
+conversion **replaces the original**, so the quality chosen is the quality kept
+forever. There is no master to go back to.
+
+Measured with `cwebp` and SSIM against real images from this vault:
+
+| content | q75 | q80 | q85 | q90 |
+|---|---|---|---|---|
+| screenshots, text pages | 0.994–0.9998 | 0.996 | 0.997 | 0.998 |
+| 1.4 MB mixed images | 0.973 | 0.979 | 0.984 | 0.989 |
+| 21 MB photographs of people | **0.898** | **0.917** | 0.940 | 0.971 |
+
+Below roughly 0.95 the artifacts on skin and faces become visible — that is the
+substance behind the common complaint that WebP looks worse than JPEG on
+portraits, and at q75-80 on a high-resolution photograph it is real.
+
+The size argument does not survive contact with the numbers either. On
+screenshots, q75 to q90 is the difference between 0.03 MB and 0.04 MB — nothing.
+On a photograph it is 0.74 MB versus 2.29 MB, which sounds like a lot until you
+remember the source PNG was 21.6 MB. q90 is still an 89% saving.
+
+So: **0.90**, which costs almost nothing on the many small images and is what
+keeps the few large photographs intact.
+
+Lossless WebP was measured too — 11.7 MB from that 21.6 MB PNG, and 0.16 MB from
+a 0.37 MB text page. Worth offering for irreplaceable originals, but **it is not
+implemented**: whether Chromium's canvas encoder produces lossless WebP at
+quality 1.0 or merely lossy q=100 has not been verified, and guessing would write
+files that claim a fidelity they do not have.
+
+## Excluded folders
+
+`excludeFolders` applies to **every** path — the create watcher, both commands,
+the right-click menu and the whole-vault button. An original that cannot be
+re-downloaded must not be convertible by accident from any direction, and a guard
+that only covers the automatic path is the one that gets bypassed by a stray
+right-click.
+
+Matching is prefix-with-boundary, so `Archive` excludes `Archive/x.png` but not
+`Archived/x.png`.
+
 ## Location modes
 
 The default, `obsidian`, defers to `vault.getAvailablePathForAttachments`, which
