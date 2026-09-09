@@ -7,8 +7,8 @@
 - **Renamed to ARCH Images Plus** (`arch-images-plus`).
 - **New: convert every image that appears in the vault**, not just pasted ones.
   Catches images this plugin did not create — a clipper saving one, another
-  plugin downloading one, a file dropped into the vault folder in Finder. Off by
-  default, optionally scoped to folders.
+  plugin downloading one, a file dropped into the vault folder in Finder. **On by
+  default**, optionally scoped to folders. It rewrites files in place.
 - The watcher binds only after layout-ready: `create` fires for every existing
   file while the vault is indexed at startup, so binding earlier would convert
   the whole vault on every launch.

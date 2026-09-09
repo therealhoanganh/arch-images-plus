@@ -28,7 +28,7 @@ const DEFAULT_SETTINGS = {
   // Paste and drop are handled by this plugin's own handler. Everything else --
   // a clipper saving an image, another plugin downloading one, a file dropped
   // into the vault folder in Finder -- arrives as a vault 'create' event.
-  autoConvert: false,
+  autoConvert: true,
   autoConvertDelayMs: 1500,
   autoConvertFolders: '',
 
@@ -640,7 +640,7 @@ class ArchImagesSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Convert every image that appears in the vault')
-      .setDesc('Catches images this plugin did not create — a clipper saving one, another plugin downloading one, a file dropped into the vault in Finder. Uses the bulk format and quality below.')
+      .setDesc('Catches images this plugin did not create — a clipper saving one, another plugin downloading one, a file dropped into the vault in Finder. Uses the bulk format and quality below. This rewrites files in place, so turn it off if you want to convert by hand.')
       .addToggle((t) => t.setValue(s.autoConvert).onChange(async (v) => { s.autoConvert = v; await save(); this.display(); }));
 
     if (s.autoConvert) {
