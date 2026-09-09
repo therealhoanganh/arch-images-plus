@@ -3,6 +3,16 @@
 
 
 
+
+## 0.3.2 — unreleased
+
+- **Bulk conversion logs what it did.** It previously logged nothing per file, so
+  a whole-vault run showed a progress notice and then silence, and a run that
+  skipped everything looked identical to one that worked. It now logs the
+  settings in force, a line per file with before/after sizes, every skip with its
+  reason, and a summary with elapsed time and bytes saved.
+- Pasting logs its result too, not just the notice.
+
 ## 0.3.1 — unreleased
 
 - **A "Convert now" button in settings**, for the whole vault and for the active

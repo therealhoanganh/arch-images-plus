@@ -124,6 +124,23 @@ Changes to `main.js` were never affected — Obsidian re-evaluates that itself.
 That asymmetry is what made this confusing: some edits took, others did not.
 
 
+## Logging
+
+Always on, no toggle, the same as the other ARCH plugins: a log that is off by
+default is a log nobody has when they need it.
+
+`runBulk` used to log **nothing per file**, so converting the whole vault
+produced a progress notice and then silence — no way to tell a conversion that
+worked from one that skipped everything. It now logs the settings it is running
+with, a line per file with before/after sizes, every skip **with its reason**, and
+a summary with the time taken and bytes saved. The reasons matter more than the
+successes here: `larger`, `animated` and `keep` are all normal outcomes, and
+without them a run where nothing converted looks identical to a broken one.
+
+A failure logs the full stack via `console.error`, because the failures worth
+chasing in bulk conversion are Obsidian API errors out of `replaceInPlace`, not
+decode errors.
+
 ## Releasing
 
 `npm run build` writes `dist/main.js` and `dist/manifest.json`. Those two files

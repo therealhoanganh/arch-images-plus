@@ -224,9 +224,14 @@ class ArchImagesPlugin extends Plugin {
   }
 
   report(file, bytes, result, target) {
-    if (!result || !result.data) return;
+    if (!result || !result.data) {
+      this.log(`pasted ${file.name || '(clipboard)'} kept as-is → ${target}`);
+      return;
+    }
     const before = file.size;
     const pct = before ? Math.round((1 - bytes.length / before) * 100) : 0;
+    this.log(`pasted → ${target} — ${kb(before)} → ${kb(bytes.length)} (${pct}% smaller)` +
+      (result.resized ? `, resized to ${result.width}×${result.height}` : ''));
     new Notice(`${path.basename(target)} — ${kb(before)} → ${kb(bytes.length)} (${pct}% smaller)`, 4000);
   }
 
@@ -327,6 +332,8 @@ class ArchImagesPlugin extends Plugin {
     const targetExt = formatInfo(this.settings.bulkFormat).ext;
 
     const work = files.filter((f) => !skip.has(f.extension.toLowerCase()) && '.' + f.extension.toLowerCase() !== targetExt);
+    this.log(`${files.length} images selected, ${work.length} to convert` +
+      (files.length - work.length ? ` (${files.length - work.length} already ${this.settings.bulkFormat.toUpperCase()} or excluded)` : ''));
     if (!work.length) return new Notice('Nothing to convert.', 4000);
 
     if (this.settings.bulkDryRun) {
@@ -340,6 +347,12 @@ class ArchImagesPlugin extends Plugin {
     const { convertBlob, formatInfo } = this.lib();
     const notice = new Notice('Converting...', 0);
     let done = 0, saved = 0, failed = 0, skipped = 0;
+    const started = Date.now();
+    const reasons = {};
+
+    this.log(`converting ${files.length} images to ${this.settings.bulkFormat.toUpperCase()}` +
+      ` at quality ${Math.round(this.settings.quality * 100)}%` +
+      (Number(this.settings.maxLongEdge) ? `, max long edge ${this.settings.maxLongEdge}px` : ', no resize'));
 
     for (const file of files) {
       try {
@@ -355,18 +368,32 @@ class ArchImagesPlugin extends Plugin {
           skipIfLarger: this.settings.skipIfLarger,
           skipAnimated: this.settings.skipAnimated,
         });
-        if (!result || !result.data) { skipped++; done++; continue; }
+        if (!result || !result.data) {
+          const why = (result && result.skipped) || 'unknown';
+          reasons[why] = (reasons[why] || 0) + 1;
+          this.log(`  skipped (${why}): ${file.path}`);
+          skipped++; done++; continue;
+        }
 
-        await this.replaceInPlace(file, result.data, result.ext || formatInfo(this.settings.bulkFormat).ext);
+        const ext = result.ext || formatInfo(this.settings.bulkFormat).ext;
+        await this.replaceInPlace(file, result.data, ext);
         saved += before - result.data.length;
         done++;
+        const pct = before ? Math.round((1 - result.data.length / before) * 100) : 0;
+        this.log(`  ${file.path} — ${kb(before)} → ${kb(result.data.length)} (${pct}% smaller)` +
+          (result.resized ? `, resized to ${result.width}×${result.height}` : ''));
       } catch (e) {
         failed++;
         done++;
+        // Full stack, because the failures worth chasing here are Obsidian API
+        // errors from replaceInPlace, not decode errors.
         console.error('[arch-images]', file.path, e);
       }
     }
     notice.hide();
+    const secs = ((Date.now() - started) / 1000).toFixed(1);
+    this.log(`done in ${secs}s — ${done - failed - skipped} converted, ${skipped} left alone, ${failed} failed, ${kb(saved)} saved`);
+    if (Object.keys(reasons).length) this.log('  left alone because:', reasons);
     new Notice(`Converted ${done - failed - skipped}/${files.length}. ${kb(saved)} saved.` +
       (skipped ? ` ${skipped} left alone.` : '') + (failed ? ` ${failed} failed.` : ''), 10000);
   }
