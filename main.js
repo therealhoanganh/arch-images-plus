@@ -45,6 +45,10 @@ const DEFAULT_SETTINGS = {
   // right-click menu and the whole-vault button. An original you cannot
   // re-download must not be convertible by accident from any direction.
   excludeFolders: '',
+  // Folders whose images are converted LOSSLESSLY -- still WebP, still smaller
+  // than PNG, but pixel-for-pixel identical. For originals that cannot be
+  // re-downloaded but are not worth leaving as 20 MB PNGs.
+  losslessFolders: '',
 
   // --- bulk conversion of images already in the vault ---
   bulkFormat: 'webp',
@@ -263,6 +267,16 @@ class ArchImagesPlugin extends Plugin {
     return this.inFolderList(file.path, this.settings.excludeFolders);
   }
 
+  // Quality 1.0 is not "lossy at maximum" -- Chromium's canvas encoder switches
+  // to lossless WebP there. Verified in headless Chrome against a noise image:
+  // q=0.9 differed in 194,633 subpixels, q=1.0 in zero. Do not assume; if this
+  // ever needs re-checking, the test is a canvas round-trip and a pixel compare.
+  qualityFor(file) {
+    return this.inFolderList(file.path, this.settings.losslessFolders)
+      ? 1
+      : Number(this.settings.quality);
+  }
+
   onCreated(file) {
     if (!this.settings.autoConvert) return;
     if (!(file instanceof TFile)) return;
@@ -296,9 +310,10 @@ class ArchImagesPlugin extends Plugin {
     const before = raw.byteLength;
     if (this.settings.skipSmallerThanKb > 0 && before < this.settings.skipSmallerThanKb * 1024) return;
 
+    const lossless = this.qualityFor(current) === 1;
     const result = await convertBlob(new Blob([raw], { type: mimeForExt(current.extension) }), {
       format: this.settings.bulkFormat,
-      quality: Number(this.settings.quality),
+      quality: this.qualityFor(current),
       maxLongEdge: Number(this.settings.maxLongEdge),
       skipIfLarger: this.settings.skipIfLarger,
       skipAnimated: this.settings.skipAnimated,
@@ -309,7 +324,7 @@ class ArchImagesPlugin extends Plugin {
     }
     const ext = result.ext || formatInfo(this.settings.bulkFormat).ext;
     await this.replaceInPlace(current, result.data, ext);
-    this.log(`auto-converted ${current.path} — ${kb(before)} → ${kb(result.data.length)}`);
+    this.log(`auto-converted${lossless ? ' (lossless)' : ''} ${current.path} — ${kb(before)} → ${kb(result.data.length)}`);
   }
 
   /* ---------------- bulk conversion ---------------- */
@@ -389,9 +404,10 @@ class ArchImagesPlugin extends Plugin {
         const before = raw.byteLength;
         const blob = new Blob([raw], { type: mimeForExt(file.extension) });
 
+        const losslessHere = this.qualityFor(file) === 1;
         const result = await convertBlob(blob, {
           format: this.settings.bulkFormat,
-          quality: Number(this.settings.quality),
+          quality: this.qualityFor(file),
           maxLongEdge: Number(this.settings.maxLongEdge),
           skipIfLarger: this.settings.skipIfLarger,
           skipAnimated: this.settings.skipAnimated,
@@ -408,7 +424,7 @@ class ArchImagesPlugin extends Plugin {
         saved += before - result.data.length;
         done++;
         const pct = before ? Math.round((1 - result.data.length / before) * 100) : 0;
-        this.log(`  ${file.path} — ${kb(before)} → ${kb(result.data.length)} (${pct}% smaller)` +
+        this.log(`  ${file.path}${losslessHere ? ' [lossless]' : ''} — ${kb(before)} → ${kb(result.data.length)} (${pct}% smaller)` +
           (result.resized ? `, resized to ${result.width}×${result.height}` : ''));
       } catch (e) {
         failed++;
@@ -718,6 +734,16 @@ class ArchImagesSettingTab extends PluginSettingTab {
       .addTextArea((t) => {
         t.setPlaceholder('Photos/Originals, Scans').setValue(s.excludeFolders)
           .onChange(async (v) => { s.excludeFolders = v; await save(); });
+        t.inputEl.rows = 3;
+        t.inputEl.style.width = '100%';
+      });
+
+    new Setting(containerEl)
+      .setName('Convert these folders losslessly')
+      .setDesc('Still WebP and still smaller than PNG — a 21 MB PNG lands around 12 MB — but pixel-for-pixel identical to the original. For images you cannot re-download but do not want to leave as huge PNGs. Excluded folders win over this.')
+      .addTextArea((t) => {
+        t.setPlaceholder('Photos/Masters').setValue(s.losslessFolders)
+          .onChange(async (v) => { s.losslessFolders = v; await save(); });
         t.inputEl.rows = 3;
         t.inputEl.style.width = '100%';
       });

@@ -108,11 +108,22 @@ remember the source PNG was 21.6 MB. q90 is still an 89% saving.
 So: **0.90**, which costs almost nothing on the many small images and is what
 keeps the few large photographs intact.
 
-Lossless WebP was measured too — 11.7 MB from that 21.6 MB PNG, and 0.16 MB from
-a 0.37 MB text page. Worth offering for irreplaceable originals, but **it is not
-implemented**: whether Chromium's canvas encoder produces lossless WebP at
-quality 1.0 or merely lossy q=100 has not been verified, and guessing would write
-files that claim a fidelity they do not have.
+**Quality 1.0 is not "lossy at maximum" — Chromium's canvas encoder switches to
+lossless WebP there.** Verified in headless Chrome, running the same encoder
+Obsidian does, by round-tripping a noise image through `convertToBlob` and
+comparing every subpixel:
+
+```
+quality=0.9  bytes=45682   differingSubpixels=194633  maxDelta=180  lossy
+quality=1    bytes=143278  differingSubpixels=0       maxDelta=0    LOSSLESS
+```
+
+That is what `losslessFolders` is built on. Do not take it on trust if it ever
+needs rechecking — the test is a canvas round-trip and a pixel compare, and it
+takes a minute.
+
+On real files: lossless WebP gave 11.7 MB from a 21.6 MB PNG and 0.16 MB from a
+0.37 MB text page. Smaller than PNG, identical to it.
 
 ## Excluded folders
 
@@ -124,6 +135,19 @@ right-click.
 
 Matching is prefix-with-boundary, so `Archive` excludes `Archive/x.png` but not
 `Archived/x.png`.
+
+There are three tiers, and they resolve in this order:
+
+1. `excludeFolders` — never touched at all.
+2. `losslessFolders` — converted to WebP at quality 1.0, which is lossless.
+3. everything else — WebP at the configured quality, 0.90 by default.
+
+Exclusion wins over lossless, because "do not touch this" is a stronger statement
+than "touch it carefully".
+
+Paste and drop use the global quality rather than consulting these lists: the
+image has no path yet when it is encoded. That is a real gap, not a decision —
+resolving the destination folder before converting would close it.
 
 ## Location modes
 

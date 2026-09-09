@@ -5,6 +5,22 @@
 
 
 
+
+## 0.5.0 — unreleased
+
+- **New: convert these folders losslessly.** A third tier between "convert" and
+  "never touch": still WebP, still smaller than PNG (11.7 MB from a 21.6 MB
+  original), but pixel-for-pixel identical. For images that cannot be
+  re-downloaded but are not worth leaving as huge PNGs. Excluded folders win.
+- This rests on a measured fact rather than an assumption: **Chromium's canvas
+  encoder produces true lossless WebP at quality 1.0.** Verified in headless
+  Chrome by round-tripping a noise image — q=0.9 differed in 194,633 subpixels,
+  q=1.0 in zero.
+- Lossless conversions are marked as such in the log.
+
+Known gap: paste and drop use the global quality, because the image has no path
+yet when it is encoded, so the folder lists cannot be consulted.
+
 ## 0.4.0 — unreleased
 
 - **New: never convert these folders.** Applies to every path — the watcher, both
