@@ -1,6 +1,22 @@
 # Changelog
 
 
+
+## 0.3.0 — unreleased
+
+- **Renamed to ARCH Images Plus** (`arch-images-plus`).
+- **New: convert every image that appears in the vault**, not just pasted ones.
+  Catches images this plugin did not create — a clipper saving one, another
+  plugin downloading one, a file dropped into the vault folder in Finder. Off by
+  default, optionally scoped to folders.
+- The watcher binds only after layout-ready: `create` fires for every existing
+  file while the vault is indexed at startup, so binding earlier would convert
+  the whole vault on every launch.
+- It waits before converting (1.5s by default). A file that has only just
+  appeared may still be being written, and a half-written download converts to
+  garbage.
+- Images this plugin wrote itself are skipped, so a paste is not converted twice.
+
 ## 0.2.1 — unreleased
 
 - **Reloading the plugin now actually reloads `lib/`.** Electron's `require()`

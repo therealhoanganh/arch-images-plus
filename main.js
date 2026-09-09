@@ -24,6 +24,14 @@ const DEFAULT_SETTINGS = {
   subfolder: 'Materials',
   folder: 'Attachments',
 
+  // --- watch for images arriving from anywhere ---
+  // Paste and drop are handled by this plugin's own handler. Everything else --
+  // a clipper saving an image, another plugin downloading one, a file dropped
+  // into the vault folder in Finder -- arrives as a vault 'create' event.
+  autoConvert: false,
+  autoConvertDelayMs: 1500,
+  autoConvertFolders: '',
+
   // --- bulk conversion of images already in the vault ---
   bulkFormat: 'webp',
   bulkSkipExtensions: 'svg, gif',
@@ -39,9 +47,18 @@ class ArchImagesPlugin extends Plugin {
     await this.loadSettings();
     this.batchCounter = 0;
     this.queue = Promise.resolve();
+    // Paths this plugin wrote itself, so the create-watcher can ignore them.
+    this.justWrote = new Set();
 
     this.registerEvent(this.app.workspace.on('editor-paste', (evt, editor, view) => this.onPaste(evt, editor, view)));
     this.registerEvent(this.app.workspace.on('editor-drop', (evt, editor, view) => this.onDrop(evt, editor, view)));
+
+    // 'create' fires for EVERY existing file while the vault is being indexed at
+    // startup, so binding it before layout-ready would convert the whole vault
+    // on every launch. onLayoutReady is what makes this mean "new file".
+    this.app.workspace.onLayoutReady(() => {
+      this.registerEvent(this.app.vault.on('create', (file) => this.onCreated(file)));
+    });
 
     this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => this.onFileMenu(menu, [file])));
     this.registerEvent(this.app.workspace.on('files-menu', (menu, files) => this.onFileMenu(menu, files)));
@@ -186,6 +203,7 @@ class ArchImagesPlugin extends Plugin {
     }
 
     const target = await this.attachmentPathFor(note, stem, ext);
+    this.justWrote.add(target);
     await this.app.vault.createBinary(target, bytes);
     this.report(file, bytes, result, target);
     return this.app.vault.getAbstractFileByPath(target) || { path: target };
@@ -210,6 +228,57 @@ class ArchImagesPlugin extends Plugin {
     const before = file.size;
     const pct = before ? Math.round((1 - bytes.length / before) * 100) : 0;
     new Notice(`${path.basename(target)} — ${kb(before)} → ${kb(bytes.length)} (${pct}% smaller)`, 4000);
+  }
+
+  /* ---------------- images arriving from elsewhere ---------------- */
+
+  onCreated(file) {
+    if (!this.settings.autoConvert) return;
+    if (!(file instanceof TFile)) return;
+    if (!IMAGE_EXTS.includes(file.extension.toLowerCase())) return;
+
+    // Never touch what this plugin just wrote. Without this, a paste converts,
+    // fires 'create', and gets picked up for conversion a second time.
+    if (this.justWrote.has(file.path)) { this.justWrote.delete(file.path); return; }
+
+    const { formatInfo } = this.lib();
+    if ('.' + file.extension.toLowerCase() === formatInfo(this.settings.bulkFormat).ext) return;
+
+    const skip = new Set(String(this.settings.bulkSkipExtensions || '')
+      .split(/[,\n]/).map((x) => x.trim().toLowerCase().replace(/^\./, '')).filter(Boolean));
+    if (skip.has(file.extension.toLowerCase())) return;
+
+    const folders = String(this.settings.autoConvertFolders || '').split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
+    if (folders.length && !folders.some((f) => file.path === f || file.path.startsWith(f.replace(/\/$/, '') + '/'))) return;
+
+    // A file that has only just been created may still be being written to --
+    // a download in progress reads as a truncated image and converts to
+    // garbage. The delay is a deliberate wait for the writer to finish.
+    window.setTimeout(() => this.enqueue(() => this.convertExisting(file)), Number(this.settings.autoConvertDelayMs) || 0);
+  }
+
+  async convertExisting(file) {
+    const current = this.app.vault.getAbstractFileByPath(file.path);
+    if (!(current instanceof TFile)) return; // moved or deleted while we waited
+    const { convertBlob, formatInfo } = this.lib();
+    const raw = await this.app.vault.readBinary(current);
+    const before = raw.byteLength;
+    if (this.settings.skipSmallerThanKb > 0 && before < this.settings.skipSmallerThanKb * 1024) return;
+
+    const result = await convertBlob(new Blob([raw], { type: mimeForExt(current.extension) }), {
+      format: this.settings.bulkFormat,
+      quality: Number(this.settings.quality),
+      maxLongEdge: Number(this.settings.maxLongEdge),
+      skipIfLarger: this.settings.skipIfLarger,
+      skipAnimated: this.settings.skipAnimated,
+    });
+    if (!result || !result.data) {
+      this.log('left alone:', result && result.skipped, current.path);
+      return;
+    }
+    const ext = result.ext || formatInfo(this.settings.bulkFormat).ext;
+    await this.replaceInPlace(current, result.data, ext);
+    this.log(`auto-converted ${current.path} — ${kb(before)} → ${kb(result.data.length)}`);
   }
 
   /* ---------------- bulk conversion ---------------- */
@@ -565,6 +634,26 @@ class ArchImagesSettingTab extends PluginSettingTab {
     if (s.locationMode === 'specified') {
       new Setting(containerEl).setName('Folder').setDesc('Tokens: {{noteName}} {{notePath}} {{date}}')
         .addText((t) => t.setValue(s.folder).onChange(async (v) => { s.folder = v; await save(); }));
+    }
+
+    containerEl.createEl('h3', { text: 'Convert images from elsewhere' });
+
+    new Setting(containerEl)
+      .setName('Convert every image that appears in the vault')
+      .setDesc('Catches images this plugin did not create — a clipper saving one, another plugin downloading one, a file dropped into the vault in Finder. Uses the bulk format and quality below.')
+      .addToggle((t) => t.setValue(s.autoConvert).onChange(async (v) => { s.autoConvert = v; await save(); this.display(); }));
+
+    if (s.autoConvert) {
+      new Setting(containerEl)
+        .setName('Only in these folders')
+        .setDesc('Comma-separated. Blank watches the whole vault.')
+        .addText((t) => t.setPlaceholder('whole vault').setValue(s.autoConvertFolders)
+          .onChange(async (v) => { s.autoConvertFolders = v; await save(); }));
+      new Setting(containerEl)
+        .setName('Wait before converting')
+        .setDesc('Milliseconds. A file that has only just appeared may still be being written; converting a half-written download produces garbage.')
+        .addText((t) => t.setValue(String(s.autoConvertDelayMs))
+          .onChange(async (v) => { s.autoConvertDelayMs = Number(v) || 0; await save(); }));
     }
 
     containerEl.createEl('h3', { text: 'Bulk conversion' });
