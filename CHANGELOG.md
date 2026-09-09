@@ -2,6 +2,16 @@
 
 
 
+
+## 0.3.1 — unreleased
+
+- **A "Convert now" button in settings**, for the whole vault and for the active
+  note. Both were commands from the start, which meant the feature was invisible
+  unless you went looking in the command palette. The button shows how many
+  images are not in the target format yet, and how much they weigh.
+- The "Where new images go" setting says plainly that its default hands the
+  decision to Obsidian's own attachment setting.
+
 ## 0.3.0 — unreleased
 
 - **Renamed to ARCH Images Plus** (`arch-images-plus`).

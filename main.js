@@ -616,6 +616,7 @@ class ArchImagesSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Where new images go')
+      .setDesc("The default hands this to Obsidian's own attachment setting, so the vault decides and this plugin does not. The other modes are for putting pasted images somewhere different without changing that vault-wide setting.")
       .addDropdown((d) => d
         .addOptions({
           obsidian: "Obsidian's attachment setting",
@@ -671,6 +672,28 @@ class ArchImagesSettingTab extends PluginSettingTab {
       .setName('Show what will change first')
       .setDesc('Bulk conversion replaces files in place. Leave this on.')
       .addToggle((t) => t.setValue(s.bulkDryRun).onChange(async (v) => { s.bulkDryRun = v; await save(); }));
+
+    // The commands existed from the start; the buttons did not, so the feature
+    // was effectively invisible unless you went looking in the command palette.
+    const all = this.plugin.allImages();
+    const target = this.plugin.lib().formatInfo(s.bulkFormat).ext;
+    const pending = all.filter((f) => '.' + f.extension.toLowerCase() !== target);
+    const bytes = pending.reduce((n, f) => n + (f.stat ? f.stat.size : 0), 0);
+
+    new Setting(containerEl)
+      .setName('Convert now')
+      .setDesc(pending.length
+        ? `${pending.length} of ${all.length} images are not ${s.bulkFormat.toUpperCase()} yet — ${kb(bytes)}. Also on the right-click menu of any file or folder.`
+        : `All ${all.length} images in the vault are already ${s.bulkFormat.toUpperCase()}.`)
+      .addButton((b) => b.setButtonText(`Whole vault (${pending.length})`).setCta()
+        .setDisabled(!pending.length)
+        .onClick(() => this.plugin.bulkConvert(this.plugin.allImages())))
+      .addButton((b) => b.setButtonText('This note')
+        .onClick(() => {
+          const file = this.app.workspace.getActiveFile();
+          if (!file) return new Notice('No note is open.', 5000);
+          this.plugin.bulkConvert(this.plugin.imagesLinkedFrom(file));
+        }));
 
   }
 }

@@ -82,6 +82,13 @@ queue uses `.then(task, task)` so one failure does not stall what is behind it.
 
 ## Location modes
 
+The default, `obsidian`, defers to `vault.getAvailablePathForAttachments`, which
+means **this plugin does not decide where images go unless asked to**. That is the
+right default: the vault already has an attachment setting, and other plugins
+respect it too. The other four modes exist so a pasted image can go somewhere
+different without changing that vault-wide setting — not to replace it.
+
+
 The five modes mirror Obsidian's own "Default location for new attachments", so
 the setting reads the way Obsidian's does. `obsidian` is the default and defers
 to `vault.getAvailablePathForAttachments`, which respects whatever the vault is
