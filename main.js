@@ -74,8 +74,31 @@ class ArchImagesPlugin extends Plugin {
     if (this._lib) return this._lib;
     if (typeof ARCH_LIB !== 'undefined') { this._lib = ARCH_LIB; return this._lib; }
     const dir = path.join(this.vaultRoot(), this.app.vault.configDir, 'plugins', this.manifest.id, 'lib');
+    this.dropLibFromRequireCache(dir);
     this._lib = require(path.join(dir, 'index.js'));
     return this._lib;
+  }
+
+  // Electron's require() caches by resolved path, and disabling and re-enabling
+  // a plugin does NOT clear that cache. Without this, editing lib/ and reloading
+  // the plugin silently keeps running the OLD code -- which makes the disk
+  // fallback, whose whole purpose is the edit-and-reload loop, useless.
+  //
+  // The plugin folder is often a symlink into the repo during development, and
+  // require resolves symlinks, so the cached keys live under the REAL path, not
+  // the one under .obsidian. Both are matched.
+  dropLibFromRequireCache(dir) {
+    if (typeof require === 'undefined' || !require.cache) return;
+    const roots = [dir];
+    try { roots.push(fs.realpathSync(dir)); } catch (_) { /* not a link, or gone */ }
+    let dropped = 0;
+    for (const key of Object.keys(require.cache)) {
+      if (roots.some((root) => key.startsWith(root + path.sep))) {
+        delete require.cache[key];
+        dropped++;
+      }
+    }
+    if (dropped) this.log(`reloaded ${dropped} lib module(s) from disk`);
   }
 
   vaultRoot() { return this.app.vault.adapter.getBasePath(); }

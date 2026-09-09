@@ -1,5 +1,13 @@
 # Changelog
 
+
+## 0.2.1 — unreleased
+
+- **Reloading the plugin now actually reloads `lib/`.** Electron's `require()`
+  caches by resolved path and a disable/enable does not clear it, so editing
+  anything in `lib/` and reloading kept running the old code while `main.js`
+  edits took effect. The cache entries are dropped before requiring.
+
 ## 0.2.0 — unreleased
 
 - **AVIF removed.** Chromium cannot encode it (it silently returns a PNG), and
