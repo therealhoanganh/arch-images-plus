@@ -117,6 +117,23 @@ page; this one handles images a human pastes. They do not share code and do not
 need to know about each other, because After Clipping never goes through
 `editor-paste`.
 
+## What has actually been verified
+
+Loaded and used in Obsidian 1.13.4 in the `TESTFIELD` vault, where the plugin is
+**symlinked** from `~/Documents/arch-images` rather than copied, so editing the
+repo and reloading picks the change up.
+
+Confirmed working by hand: the plugin loads, the settings tab renders, and paste
+conversion to WebP produces the expected file and embed.
+
+Confirmed broken and since removed: AVIF (see above).
+
+Never exercised by anything but reasoning: the rename prompt, the file and folder
+context menus, the bulk preview modal, and `replaceInPlace` — which is the
+riskiest code here, because it renames a file and overwrites its bytes. The
+`ARCH test/` folder in that vault exists to exercise those; nothing has clicked
+through it yet.
+
 ## Not yet built
 
 - No setup/detection modal, and with AVIF gone there is no external tool to
