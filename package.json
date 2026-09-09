@@ -1,6 +1,6 @@
 {
   "name": "arch-images",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Obsidian plugin that renames and converts images in a single paste-time step.",
   "private": true,
   "scripts": {

@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const DEFAULT_SETTINGS = {
   // --- conversion ---
-  format: 'webp',            // webp | jpeg | png | avif | keep
+  format: 'webp',            // webp | jpeg | png | keep
   quality: 0.82,             // 0.1 - 1.0, lossy formats only
   maxLongEdge: 0,            // 0 = never resize
   skipIfLarger: true,
@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS = {
 
   // --- naming ---
   nameTemplate: '{{noteName}} {{date}}-{{counter}}',
-  askOnPaste: false,         // show the rename prompt before saving
+  askOnPaste: true,          // show the rename prompt before saving
 
   // --- where the file lands ---
   // Same choices as Obsidian's "Default location for new attachments", so the
@@ -28,9 +28,6 @@ const DEFAULT_SETTINGS = {
   bulkFormat: 'webp',
   bulkSkipExtensions: 'svg, gif',
   bulkDryRun: true,
-
-  // --- external encoder (AVIF only; canvas cannot write it) ---
-  ffmpegPath: '',
 
   setupDone: false,
 };
@@ -127,7 +124,7 @@ class ArchImagesPlugin extends Plugin {
   }
 
   async saveOne(file, note, indexInBatch) {
-    const { convertBlob, formatInfo, needsExternalEncoder, buildStem } = this.lib();
+    const { convertBlob, formatInfo, buildStem } = this.lib();
     const tooSmall = this.settings.skipSmallerThanKb > 0 && file.size < this.settings.skipSmallerThanKb * 1024;
 
     let bytes = new Uint8Array(await file.arrayBuffer());
@@ -135,17 +132,13 @@ class ArchImagesPlugin extends Plugin {
     let result = null;
 
     if (!tooSmall && this.settings.format !== 'keep') {
-      if (needsExternalEncoder(this.settings.format)) {
-        result = await this.convertViaFfmpeg(bytes, this.extFor(file));
-      } else {
-        result = await convertBlob(file, {
-          format: this.settings.format,
-          quality: Number(this.settings.quality),
-          maxLongEdge: Number(this.settings.maxLongEdge),
-          skipIfLarger: this.settings.skipIfLarger,
-          skipAnimated: this.settings.skipAnimated,
-        });
-      }
+      result = await convertBlob(file, {
+        format: this.settings.format,
+        quality: Number(this.settings.quality),
+        maxLongEdge: Number(this.settings.maxLongEdge),
+        skipIfLarger: this.settings.skipIfLarger,
+        skipAnimated: this.settings.skipAnimated,
+      });
       if (result && result.data) {
         bytes = result.data;
         ext = result.ext || formatInfo(this.settings.format).ext;
@@ -194,47 +187,6 @@ class ArchImagesPlugin extends Plugin {
     const before = file.size;
     const pct = before ? Math.round((1 - bytes.length / before) * 100) : 0;
     new Notice(`${path.basename(target)} — ${kb(before)} → ${kb(bytes.length)} (${pct}% smaller)`, 4000);
-  }
-
-  /* ---------------- AVIF via ffmpeg ---------------- */
-
-  // Chromium's canvas cannot encode AVIF -- it returns a PNG under the AVIF
-  // mime type instead of failing. So AVIF goes out to ffmpeg through a pair of
-  // temp files. Everything else stays in the renderer.
-  async convertViaFfmpeg(bytes, sourceExt) {
-    const bin = this.settings.ffmpegPath || 'ffmpeg';
-    const tmpDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'arch-images-'));
-    const inPath = path.join(tmpDir, 'in' + (sourceExt || '.png'));
-    const outPath = path.join(tmpDir, 'out.avif');
-    try {
-      fs.writeFileSync(inPath, bytes);
-      const crf = Math.round(63 - Number(this.settings.quality) * 45); // 0.82 -> 26
-      const args = ['-y', '-i', inPath];
-      if (Number(this.settings.maxLongEdge) > 0) {
-        const m = Number(this.settings.maxLongEdge);
-        args.push('-vf', `scale='if(gt(iw,ih),min(${m},iw),-2)':'if(gt(iw,ih),-2,min(${m},ih))'`);
-      }
-      args.push('-c:v', 'libaom-av1', '-crf', String(crf), '-still-picture', '1', outPath);
-      await this.run(bin, args, 120000);
-      if (!fs.existsSync(outPath)) throw new Error('ffmpeg produced nothing');
-      const data = new Uint8Array(fs.readFileSync(outPath));
-      return { data, ext: '.avif', mime: 'image/avif', bytes: data.length };
-    } finally {
-      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) { /* temp dir */ }
-    }
-  }
-
-  run(command, args, timeoutMs = 30000) {
-    const { execFile } = require('child_process');
-    return new Promise((resolve, reject) => {
-      execFile(command, args, { timeout: timeoutMs, maxBuffer: 1024 * 1024 * 8, windowsHide: true }, (err, stdout, stderr) => {
-        if (err && err.code === 'ENOENT') return reject(new Error(`${command} not found`));
-        // ffmpeg writes progress to stderr and still exits 0, so only a non-zero
-        // exit is a failure. The last few stderr lines carry the actual reason.
-        if (err) return reject(new Error(String(stderr || err.message).split('\n').filter(Boolean).slice(-3).join(' ')));
-        resolve({ stdout: stdout || '', stderr: stderr || '' });
-      });
-    });
   }
 
   /* ---------------- bulk conversion ---------------- */
@@ -293,7 +245,7 @@ class ArchImagesPlugin extends Plugin {
   }
 
   async runBulk(files) {
-    const { convertBlob, formatInfo, needsExternalEncoder } = this.lib();
+    const { convertBlob, formatInfo } = this.lib();
     const notice = new Notice('Converting...', 0);
     let done = 0, saved = 0, failed = 0, skipped = 0;
 
@@ -304,18 +256,13 @@ class ArchImagesPlugin extends Plugin {
         const before = raw.byteLength;
         const blob = new Blob([raw], { type: mimeForExt(file.extension) });
 
-        let result;
-        if (needsExternalEncoder(this.settings.bulkFormat)) {
-          result = await this.convertViaFfmpeg(new Uint8Array(raw), '.' + file.extension);
-        } else {
-          result = await convertBlob(blob, {
-            format: this.settings.bulkFormat,
-            quality: Number(this.settings.quality),
-            maxLongEdge: Number(this.settings.maxLongEdge),
-            skipIfLarger: this.settings.skipIfLarger,
-            skipAnimated: this.settings.skipAnimated,
-          });
-        }
+        const result = await convertBlob(blob, {
+          format: this.settings.bulkFormat,
+          quality: Number(this.settings.quality),
+          maxLongEdge: Number(this.settings.maxLongEdge),
+          skipIfLarger: this.settings.skipIfLarger,
+          skipAnimated: this.settings.skipAnimated,
+        });
         if (!result || !result.data) { skipped++; done++; continue; }
 
         await this.replaceInPlace(file, result.data, result.ext || formatInfo(this.settings.bulkFormat).ext);
@@ -436,6 +383,12 @@ class ArchImagesPlugin extends Plugin {
   async loadSettings() {
     const saved = (await this.loadData()) || {};
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
+    // AVIF was offered briefly and removed. A saved 'avif' would otherwise fall
+    // through formatInfo's default and write WebP bytes while the settings tab
+    // showed a format that is no longer in the dropdown.
+    if (this.settings.format === 'avif') this.settings.format = 'webp';
+    if (this.settings.bulkFormat === 'avif') this.settings.bulkFormat = 'webp';
+    delete this.settings.ffmpegPath;
   }
 
   async saveSettings() { await this.saveData(this.settings); }
@@ -523,9 +476,9 @@ class ArchImagesSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Format')
-      .setDesc('AVIF is encoded by ffmpeg, not the browser — it needs ffmpeg installed and is much slower.')
+      .setDesc('WebP is the smallest of these for almost every image.')
       .addDropdown((d) => d
-        .addOptions({ webp: 'WebP', jpeg: 'JPEG', png: 'PNG', avif: 'AVIF (ffmpeg)', keep: 'Keep original' })
+        .addOptions({ webp: 'WebP', jpeg: 'JPEG', png: 'PNG', keep: 'Keep original' })
         .setValue(s.format)
         .onChange(async (v) => { s.format = v; await save(); this.display(); }));
 
@@ -595,7 +548,7 @@ class ArchImagesSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Bulk target format')
-      .addDropdown((d) => d.addOptions({ webp: 'WebP', jpeg: 'JPEG', avif: 'AVIF (ffmpeg)' })
+      .addDropdown((d) => d.addOptions({ webp: 'WebP', jpeg: 'JPEG' })
         .setValue(s.bulkFormat).onChange(async (v) => { s.bulkFormat = v; await save(); }));
 
     new Setting(containerEl)
@@ -607,12 +560,6 @@ class ArchImagesSettingTab extends PluginSettingTab {
       .setDesc('Bulk conversion replaces files in place. Leave this on.')
       .addToggle((t) => t.setValue(s.bulkDryRun).onChange(async (v) => { s.bulkDryRun = v; await save(); }));
 
-    containerEl.createEl('h3', { text: 'External tools' });
-    new Setting(containerEl)
-      .setName('ffmpeg path')
-      .setDesc('Only needed for AVIF. Blank uses ffmpeg from PATH.')
-      .addText((t) => t.setPlaceholder('/usr/local/bin/ffmpeg').setValue(s.ffmpegPath)
-        .onChange(async (v) => { s.ffmpegPath = v.trim(); await save(); }));
   }
 }
 

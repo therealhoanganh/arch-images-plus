@@ -1,9 +1,9 @@
 # ARCH Images
 
 Renames and converts images in a single step. Paste or drop an image into a note
-and it is encoded to WebP, JPEG or AVIF, resized if you asked for that, saved
-under a name built from your template, and linked — all before anything else
-touches the file.
+and it is encoded to WebP, JPEG or PNG, resized if you asked for that, saved
+under a name you confirm, and linked — all before anything else touches the
+file.
 
 It exists because **Paste Image Rename** and **Image Converter** do not work
 together: both hook the paste event and both save the file, so the result depends
@@ -12,11 +12,12 @@ on which loads first. One handler, one pipeline, no race.
 ## What it does
 
 **On paste and drop**
-- Converts to WebP, JPEG, PNG or AVIF at a quality you choose
+- Converts to WebP, JPEG or PNG at a quality you choose
 - Optionally resizes to a maximum long edge, never enlarging
 - Names the file from a template — `{{noteName}} {{date}}-{{counter}}` by default
 - Saves it where Obsidian would, or in a folder of your choosing
-- Optionally asks you for the name first
+- Asks you to confirm the name first (on by default; turn it off for silent
+  pasting)
 
 **On images already in the vault**
 - Convert the whole vault, one folder, a selection, or just the images used by
@@ -27,8 +28,7 @@ on which loads first. One handler, one pipeline, no race.
 
 ## Requirements
 
-Desktop only. ffmpeg is needed **only** if you choose AVIF — every other format
-is encoded in-process with no external tool.
+Desktop only. No external tools at all — every format is encoded in-process.
 
 ## Settings worth knowing
 

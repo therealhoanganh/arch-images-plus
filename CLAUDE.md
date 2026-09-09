@@ -32,16 +32,26 @@ macOS Intel (`darwin x64`), Obsidian 1.13.4. Desktop only.
 
 ## Things that cost hours to learn
 
-**Chromium cannot encode AVIF, and it does not tell you.**
-`canvas.convertToBlob({ type: 'image/avif' })` does not throw and does not return
-null. It silently returns a **PNG**, which is typically several times larger than
-the JPEG you started from — so "convert to AVIF" made every file bigger and the
-`.avif` files on disk were not AVIF at all. Chromium encodes `image/png`,
-`image/jpeg` and `image/webp` and nothing else; it *decodes* AVIF, HEIC and HEIF
-fine, which is why loading those still works.
+**AVIF is gone, and it should stay gone.** It was offered in 0.1.0 and removed
+after the first real run. Two independent reasons, either of which is enough:
 
-`needsExternalEncoder()` is the guard. AVIF is routed to ffmpeg through a pair of
-temp files instead. Do not "simplify" that back into the canvas path.
+Chromium cannot *encode* AVIF and does not say so — `convertToBlob({ type:
+'image/avif' })` silently returns a **PNG**, so the file is larger than the JPEG
+it came from and is not AVIF. Chromium encodes `image/png`, `image/jpeg` and
+`image/webp`, nothing else.
+
+The ffmpeg fallback written to work around that hardcoded `-c:v libaom-av1`, and
+this machine's ffmpeg ships `libsvtav1` instead, so every AVIF conversion failed.
+Encoder names are a per-build detail, not something to hardcode, and probing for
+them is more machinery than a second lossy format is worth when WebP is already
+smaller than JPEG for almost everything.
+
+`needsExternalEncoder()` survives as a **guard**, not a feature: with the formats
+now offered it is always false, and it exists so that adding a format the canvas
+cannot write fails loudly instead of writing a mislabelled PNG.
+
+Note that AVIF *decoding* still works, so an `.avif` already in the vault
+converts to WebP fine and `avif` stays in `IMAGE_EXTS`.
 
 **Bulk conversion renames before it overwrites, and the order is the point.**
 `fileManager.renameFile` is the API Obsidian itself uses, so it rewrites every
@@ -109,9 +119,9 @@ need to know about each other, because After Clipping never goes through
 
 ## Not yet built
 
-- No setup/detection modal. ffmpeg is a plain path setting for now; if AVIF turns
-  out to be used often, lift the `findBinary` / `SetupModal` pair out of ARCH YT
-  Playlists rather than writing a new one.
+- No setup/detection modal, and with AVIF gone there is no external tool to
+  detect. If one is ever needed, lift the `findBinary` / `SetupModal` pair out of
+  ARCH YT Playlists rather than writing a new one.
 - `{{counter}}` counts within the session, not per folder or per note. Uniqueness
   comes from `uniquePath`, so collisions are safe but the numbering restarts.
 - Bulk conversion has never been run on a large vault. It replaces files in

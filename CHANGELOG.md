@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 — unreleased
+
+- **AVIF removed.** Chromium cannot encode it (it silently returns a PNG), and
+  the ffmpeg fallback hardcoded `libaom-av1` while this machine's ffmpeg carries
+  `libsvtav1`, so every AVIF conversion failed. WebP is smaller than JPEG for
+  almost everything, so a second lossy format was not worth probing encoder names
+  for. Decoding is unaffected: an `.avif` already in the vault still converts.
+- The ffmpeg path setting and the whole external-encoder path are gone with it.
+  A saved `format: 'avif'` migrates to WebP on load.
+- **The rename prompt is now on by default.** Naming an image at the moment of
+  pasting is the reason the plugin exists; defaulting it off buried the feature.
+
 ## 0.1.0 — unreleased
 
 First working version. Scaffolded to replace **Paste Image Rename** +
@@ -40,6 +52,7 @@ First working version. Scaffolded to replace **Paste Image Rename** +
 **Guards, each of which is deliberate**
 - AVIF goes through ffmpeg. Chromium's canvas silently returns a PNG for
   `image/avif`, so the canvas path would write a larger, mislabelled file.
+  *(Removed in 0.2.0 — see above.)*
 - An image that gets bigger after conversion keeps its original.
 - Animated GIF/APNG is left alone; it decodes as a single frame.
 - SVG and GIF are excluded from bulk conversion by default.
