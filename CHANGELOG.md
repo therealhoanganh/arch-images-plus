@@ -6,6 +6,17 @@
 
 
 
+
+## 0.5.1 — unreleased
+
+- **Pasting now obeys the excluded and lossless folder lists.** It did not:
+  pasting into a note whose attachments land in an excluded folder converted the
+  image anyway, which is precisely what that setting exists to prevent. The
+  destination folder is now resolved *before* encoding, since an image being
+  converted has no path yet to match against.
+- An excluded folder still applies the name template — exclusion is about
+  conversion, not naming — and keeps the original bytes and format.
+
 ## 0.5.0 — unreleased
 
 - **New: convert these folders losslessly.** A third tier between "convert" and

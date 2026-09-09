@@ -145,9 +145,22 @@ There are three tiers, and they resolve in this order:
 Exclusion wins over lossless, because "do not touch this" is a stronger statement
 than "touch it carefully".
 
-Paste and drop use the global quality rather than consulting these lists: the
-image has no path yet when it is encoded. That is a real gap, not a decision —
-resolving the destination folder before converting would close it.
+**Paste and drop obey these lists too, and making them do so required resolving
+the destination folder before encoding.** The obvious ordering — convert, then
+work out where the file goes — cannot consult the lists at all, because the image
+has no path while it is being encoded. So pasting into a note whose attachments
+land in an excluded folder converted it anyway, which is exactly what "never
+convert this folder" is supposed to prevent.
+
+`destinationFolder()` answers "where would this land" without committing to a
+filename. For the `obsidian` mode it asks
+`getAvailablePathForAttachments` with the *source* extension and takes the parent
+of the answer — the extension only affects the name, not the folder, so it does
+not matter that it is not the final one.
+
+Note that an excluded folder still gets the **name template**: exclusion is about
+conversion, not naming. The original bytes and format are kept, and the file is
+still named the way you asked.
 
 ## Location modes
 

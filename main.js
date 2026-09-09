@@ -189,10 +189,24 @@ class ArchImagesPlugin extends Plugin {
     let ext = this.extFor(file);
     let result = null;
 
-    if (!tooSmall && this.settings.format !== 'keep') {
+    // WHERE the image will land has to be known BEFORE it is encoded, or the
+    // folder rules cannot apply to a paste: pasting into a note whose images go
+    // to an excluded folder would convert it anyway, which is precisely what
+    // "never convert this folder" is supposed to prevent.
+    const folder = await this.destinationFolder(note, ext);
+    const excluded = this.inFolderList(folder, this.settings.excludeFolders);
+    const quality = this.inFolderList(folder, this.settings.losslessFolders)
+      ? 1
+      : Number(this.settings.quality);
+
+    if (excluded) {
+      this.log(`pasting into an excluded folder (${folder || 'vault root'}) — keeping the original format`);
+    }
+
+    if (!excluded && !tooSmall && this.settings.format !== 'keep') {
       result = await convertBlob(file, {
         format: this.settings.format,
-        quality: Number(this.settings.quality),
+        quality,
         maxLongEdge: Number(this.settings.maxLongEdge),
         skipIfLarger: this.settings.skipIfLarger,
         skipAnimated: this.settings.skipAnimated,
@@ -227,6 +241,24 @@ class ArchImagesPlugin extends Plugin {
     return this.app.vault.getAbstractFileByPath(target) || { path: target };
   }
 
+  // The folder an attachment would land in, resolved without committing to a
+  // filename. For the 'obsidian' mode that means asking Obsidian for a path and
+  // taking its parent -- the extension passed in only affects the name, not the
+  // folder, so the source extension is good enough to ask with.
+  async destinationFolder(note, ext) {
+    if ((this.settings.locationMode || 'obsidian') === 'obsidian') {
+      try {
+        const probe = await this.app.vault.getAvailablePathForAttachments('probe', String(ext).replace(/^\./, ''), note);
+        if (probe) {
+          const p = normalizePath(probe);
+          const cut = p.lastIndexOf('/');
+          return cut === -1 ? '' : p.slice(0, cut);
+        }
+      } catch (_) { /* older build: fall through to the folder setting */ }
+    }
+    return this.resolveFolder(note);
+  }
+
   nextCounter(indexInBatch) {
     // Restarts each minute-scale batch rather than growing forever; uniqueness
     // is guaranteed by uniquePath, not by this number.
@@ -249,6 +281,7 @@ class ArchImagesPlugin extends Plugin {
     const before = file.size;
     const pct = before ? Math.round((1 - bytes.length / before) * 100) : 0;
     this.log(`pasted → ${target} — ${kb(before)} → ${kb(bytes.length)} (${pct}% smaller)` +
+      (result.lossless ? ' [lossless]' : '') +
       (result.resized ? `, resized to ${result.width}×${result.height}` : ''));
     new Notice(`${path.basename(target)} — ${kb(before)} → ${kb(bytes.length)} (${pct}% smaller)`, 4000);
   }
