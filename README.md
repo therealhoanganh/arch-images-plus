@@ -1,4 +1,4 @@
-# ARCH Images
+# ARCH Images Plus
 
 Renames and converts images in a single step. Paste or drop an image into a note
 and it is encoded to WebP, JPEG or PNG, resized if you asked for that, saved
@@ -42,7 +42,7 @@ Desktop only. No external tools at all — every format is encoded in-process.
 ## Install
 
 Not in the community catalogue. Install with BRAT, or copy `main.js` and
-`manifest.json` into `.obsidian/plugins/arch-images/`.
+`manifest.json` into `.obsidian/plugins/arch-images-plus/`.
 
 ## Licence
 

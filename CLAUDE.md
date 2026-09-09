@@ -1,4 +1,4 @@
-# ARCH Images — working notes
+# ARCH Images Plus — working notes
 
 An Obsidian plugin that renames and converts an image in one step, at the moment
 it is pasted or dropped, and converts images already in the vault in bulk.
@@ -135,7 +135,7 @@ need to know about each other, because After Clipping never goes through
 ## What has actually been verified
 
 Loaded and used in Obsidian 1.13.4 in the `TESTFIELD` vault, where the plugin is
-**symlinked** from `~/Documents/arch-images` rather than copied, so editing the
+**symlinked** from `~/Documents/arch-images-plus` rather than copied, so editing the
 repo and reloading picks the change up.
 
 Confirmed working by hand: the plugin loads, the settings tab renders, and paste
