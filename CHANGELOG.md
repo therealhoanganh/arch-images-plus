@@ -7,6 +7,19 @@
 
 
 
+## 0.5.3
+
+- **The Enter or Escape that closes the rename prompt no longer reaches the
+  note.** The prompt closed on `keydown`, handing focus back to the editor
+  while the same keystroke was still in flight, so the browser typed its
+  newline into the note — with the selection snapped to the start of the
+  document, above the frontmatter. One blank line per paste, and after a few
+  pastes the properties stopped being recognised. The key event is now
+  cancelled inside the prompt.
+- After the embed is inserted the cursor is placed on the line after it, as
+  Obsidian's own paste does, instead of wherever the prompt's focus round-trip
+  left it.
+
 ## 0.5.2
 
 - **The embed no longer lands wherever the cursor happens to be once the image

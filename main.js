@@ -190,6 +190,9 @@ class ArchImagesPlugin extends Plugin {
     let end = at + marker.length;
     if (!text && doc[end] === '\n') end++;   // take the line with it
     editor.replaceRange(text, editor.offsetToPos(at), editor.offsetToPos(end));
+    // The modal's focus round-trip can leave the selection anywhere; put it
+    // where Obsidian's own paste would, on the line after the embed.
+    if (text) editor.setCursor(editor.offsetToPos(at + text.length + 1));
   }
 
   imageFilesFrom(transfer) {
@@ -661,9 +664,19 @@ class RenameModal extends Modal {
     input.style.width = '100%';
     input.focus();
     input.select();
+    // The key that closes this prompt must not reach the editor. Closing on
+    // keydown hands focus back to the note while the same keystroke is still
+    // in flight, and the browser then delivers its keypress/beforeinput there
+    // -- with the editor's selection snapped to the start of the document, so
+    // each Enter added a blank line ABOVE the frontmatter. preventDefault on
+    // the keydown stops the keystroke producing any input at all.
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { this.answered = true; this.resolve(input.value.trim()); this.close(); }
-      if (e.key === 'Escape') { this.answered = true; this.resolve(null); this.close(); }
+      if (e.key !== 'Enter' && e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.answered = true;
+      this.resolve(e.key === 'Enter' ? input.value.trim() : null);
+      this.close();
     });
     const row = this.contentEl.createDiv({ cls: 'modal-button-container' });
     row.createEl('button', { text: 'Save', cls: 'mod-cta' }).onclick = () => {

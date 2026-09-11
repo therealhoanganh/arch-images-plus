@@ -1,7 +1,7 @@
 {
   "id": "arch-images-plus",
   "name": "𝗔𝗿𝗰𝗵 Images Plus",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "minAppVersion": "1.6.0",
   "description": "Renames and converts images in one step: a pasted or dropped image is encoded to WebP, JPEG or AVIF and saved under a name from your template, and images already in the vault can be converted in bulk with their links rewritten.",
   "author": "Hoang Anh",

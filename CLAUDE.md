@@ -84,6 +84,13 @@ image …]` synchronously in the paste handler, and `replacePlaceholder` finds
 that text in the document when the save resolves and replaces it there. Do not
 "simplify" this back to `replaceSelection` after an `await`.
 
+**The rename prompt cancels the key that closes it.** Closing a modal on
+`keydown` returns focus to the editor while that keystroke is still in flight,
+and the browser delivers the keypress there — with the selection snapped to
+the start of the document, so every Enter in the prompt added a blank line
+above the frontmatter. `preventDefault` + `stopPropagation` on the keydown is
+what stops it; do not switch the prompt to closing on a bare key handler.
+
 **Saves run through a single queue.** Two images pasted together otherwise
 resolve `uniquePath` against the same folder listing before either has been
 written, and both get the same name; the second `createBinary` then throws. The
