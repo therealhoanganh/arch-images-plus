@@ -265,11 +265,14 @@ conversion to WebP produces the expected file and embed.
 
 Confirmed broken and since removed: AVIF (see above).
 
-Never exercised by anything but reasoning: the rename prompt, the file and folder
-context menus, the bulk preview modal, and `replaceInPlace` — which is the
-riskiest code here, because it renames a file and overwrites its bytes. The
-`ARCH test/` folder in that vault exists to exercise those; nothing has clicked
-through it yet.
+The rename prompt has been used for real on notes with frontmatter (0.5.2 and
+0.5.3 came out of that — the embed landing in the closing fence, then the Enter
+key leaking a blank line above it). Both fixes were confirmed by hand.
+
+Never exercised by anything but reasoning: the file and folder context menus,
+the bulk preview modal, and `replaceInPlace` — which is the riskiest code here,
+because it renames a file and overwrites its bytes. The `ARCH test/` folder in
+that vault exists to exercise those; nothing has clicked through it yet.
 
 ## Not yet built
 
