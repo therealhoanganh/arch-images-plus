@@ -148,14 +148,48 @@ class ArchImagesPlugin extends Plugin {
     const files = this.imageFilesFrom(evt.clipboardData);
     if (!files.length) return;
     evt.preventDefault();
-    this.enqueue(() => this.handleFiles(files, editor, view));
+    const markers = this.insertPlaceholders(editor, files.length);
+    this.enqueue(() => this.handleFiles(files, editor, view, markers));
   }
 
   onDrop(evt, editor, view) {
     const files = this.imageFilesFrom(evt.dataTransfer);
     if (!files.length) return;
     evt.preventDefault();
-    this.enqueue(() => this.handleFiles(files, editor, view));
+    const markers = this.insertPlaceholders(editor, files.length);
+    this.enqueue(() => this.handleFiles(files, editor, view, markers));
+  }
+
+  // The embed is NOT inserted at the cursor once the image is saved. By then
+  // the conversion and the rename prompt have both run, and the cursor is
+  // wherever the editor left it -- which, after a modal and a reload of the
+  // note, was once three characters short of where the paste happened, inside
+  // the closing frontmatter fence. A placeholder written synchronously, here,
+  // is the only thing that still marks the paste position afterwards.
+  insertPlaceholders(editor, count) {
+    const markers = [];
+    for (let i = 0; i < count; i++) {
+      markers.push(`[Saving image ${Math.random().toString(36).slice(2, 8)}…]`);
+    }
+    editor.replaceSelection(markers.map((m) => m + '\n').join(''));
+    return markers;
+  }
+
+  // Replaces a placeholder wherever it is now, or removes it when text is
+  // empty. Searching the document rather than remembering an offset is what
+  // makes edits, cursor moves and a re-rendered note while the prompt is open
+  // harmless. If the placeholder is gone the user removed it, so nothing is
+  // inserted: guessing a position is exactly the bug this replaces.
+  replacePlaceholder(editor, marker, text) {
+    const doc = editor.getValue();
+    const at = doc.indexOf(marker);
+    if (at === -1) {
+      this.log('placeholder no longer in the note, not inserting:', marker);
+      return;
+    }
+    let end = at + marker.length;
+    if (!text && doc[end] === '\n') end++;   // take the line with it
+    editor.replaceRange(text, editor.offsetToPos(at), editor.offsetToPos(end));
   }
 
   imageFilesFrom(transfer) {
@@ -173,12 +207,19 @@ class ArchImagesPlugin extends Plugin {
     return this.queue;
   }
 
-  async handleFiles(files, editor, view) {
+  async handleFiles(files, editor, view, markers) {
     const note = view && view.file ? view.file : this.app.workspace.getActiveFile();
+    let failure = null;
     for (let i = 0; i < files.length; i++) {
-      const saved = await this.saveOne(files[i], note, i);
-      if (saved) editor.replaceSelection(this.embedFor(saved, note) + '\n');
+      let saved = null;
+      if (!failure) {
+        try { saved = await this.saveOne(files[i], note, i); } catch (e) { failure = e; }
+      }
+      // Every placeholder is resolved, including those after a failure, so a
+      // thrown save never leaves "[Saving image …]" text behind in the note.
+      this.replacePlaceholder(editor, markers[i], saved ? this.embedFor(saved, note) : '');
     }
+    if (failure) throw failure;
   }
 
   async saveOne(file, note, indexInBatch) {

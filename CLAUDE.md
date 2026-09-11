@@ -75,6 +75,15 @@ animation away with no warning. `skipAnimated` leaves them alone, and
 `bulkSkipExtensions` lists `gif` and `svg` by default — SVG is vector and
 rasterising it is a downgrade, not a conversion.
 
+**The embed is anchored to a placeholder, never to the cursor.** The cursor at
+paste time and the cursor when the save finishes are not the same thing: the
+conversion and the rename prompt sit between them, and a modal plus a
+re-rendered note once put the embed three characters short of the paste point,
+inside the closing frontmatter fence. `insertPlaceholders` writes `[Saving
+image …]` synchronously in the paste handler, and `replacePlaceholder` finds
+that text in the document when the save resolves and replaces it there. Do not
+"simplify" this back to `replaceSelection` after an `await`.
+
 **Saves run through a single queue.** Two images pasted together otherwise
 resolve `uniquePath` against the same folder listing before either has been
 written, and both get the same name; the second `createBinary` then throws. The

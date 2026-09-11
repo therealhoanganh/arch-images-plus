@@ -7,6 +7,19 @@
 
 
 
+## 0.5.2
+
+- **The embed no longer lands wherever the cursor happens to be once the image
+  is saved.** It was inserted with `replaceSelection` *after* the conversion and
+  the rename prompt, so it went to the cursor position at that moment — and
+  after a modal and a re-render of the note that was once three characters
+  short of the paste point, inside the closing frontmatter `---`, which broke
+  every property in the note. A `[Saving image …]` placeholder is now written
+  synchronously at paste time and replaced wherever it is when the save
+  finishes; cancelling the prompt or a failed save removes it. If the
+  placeholder has been deleted meanwhile, nothing is inserted rather than
+  guessing.
+
 ## 0.5.1 — unreleased
 
 - **Pasting now obeys the excluded and lossless folder lists.** It did not:
