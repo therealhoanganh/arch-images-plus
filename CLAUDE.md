@@ -218,6 +218,11 @@ matches the plugin folder **and its realpath**, because during development that
 folder is a symlink into the repo and `require` resolves symlinks, so the cached
 keys live under the repo path rather than under `.obsidian`.
 
+**It walks `require.cache`, and that may be the wrong cache.** ARCH Recreations
+found that the `require` a plugin is handed is Obsidian's wrapper, whose `.cache` is
+not Node's, and walks `window.require.cache` instead. Not tested here; open work in
+`../CLAUDE.md`.
+
 Changes to `main.js` were never affected — Obsidian re-evaluates that itself.
 That asymmetry is what made this confusing: some edits took, others did not.
 
@@ -273,6 +278,10 @@ Never exercised by anything but reasoning: the file and folder context menus,
 the bulk preview modal, and `replaceInPlace` — which is the riskiest code here,
 because it renames a file and overwrites its bytes. The `ARCH test/` folder in
 that vault exists to exercise those; nothing has clicked through it yet.
+
+Checked 2026-09-23: `replaceInPlace` has since run on every automatic
+conversion (`onCreated` calls it), and about 2,000 WebP images sit in the vaults.
+The context menus and the bulk preview modal are still unexercised.
 
 ## Not yet built
 
