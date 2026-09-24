@@ -3,6 +3,38 @@
 const { Plugin, PluginSettingTab, Setting, Notice, Modal, TFile, TFolder, normalizePath } = require('obsidian');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+
+/* ---------------- one computer does the automatic work (0.6.0) ---------------- */
+
+// Since 2026-09-25 the vaults are mirrored between the Mac and an Ubuntu PC by
+// Syncthing. A note written on one machine arrives on the other as a new file,
+// so with Obsidian open on both, both would process it: two downloads, two
+// conversions, conflict files. The setting automaticOn names the one computer
+// that runs the automatic work; the settings file syncs, so both machines read
+// the same answer. Commands and menus run anywhere. Shared with ARCH After
+// Clipping, copied word for word.
+//
+// The name is macOS's Local Hostname there, because the kernel hostname can
+// change with the network; elsewhere os.hostname().
+function computerName() {
+  if (process.platform === 'darwin') {
+    try {
+      const n = require('child_process')
+        .execFileSync('/usr/sbin/scutil', ['--get', 'LocalHostName'], { encoding: 'utf8', timeout: 3000 })
+        .trim();
+      if (n) return n;
+    } catch (_) {}
+  }
+  return os.hostname().replace(/\.local$/, '');
+}
+
+// automaticOn: '' is unclaimed (the first computer to load this version claims
+// it), '*' is every computer, anything else one computer's name.
+function automaticRunsHere(settings, here) {
+  const a = String(settings.automaticOn || '');
+  return !a || a === '*' || a === here;
+}
 
 const DEFAULT_SETTINGS = {
   // --- conversion ---
@@ -56,6 +88,10 @@ const DEFAULT_SETTINGS = {
   bulkDryRun: true,
 
   setupDone: false,
+  // The one computer whose watcher converts images arriving in the vault
+  // (0.6.0). '' unclaimed, '*' every computer, else a computer's name. Paste,
+  // drop, the menus and the commands work everywhere.
+  automaticOn: '',
 };
 
 const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'avif', 'bmp', 'gif', 'tif', 'tiff', 'heic', 'heif'];
@@ -356,6 +392,7 @@ class ArchImagesPlugin extends Plugin {
 
   onCreated(file) {
     if (!this.settings.autoConvert) return;
+    if (!automaticRunsHere(this.settings, this.computer)) return;
     if (!(file instanceof TFile)) return;
     if (!IMAGE_EXTS.includes(file.extension.toLowerCase())) return;
     if (this.isExcluded(file)) return;
@@ -629,9 +666,25 @@ class ArchImagesPlugin extends Plugin {
     if (this.settings.format === 'avif') this.settings.format = 'webp';
     if (this.settings.bulkFormat === 'avif') this.settings.bulkFormat = 'webp';
     delete this.settings.ffmpegPath;
+    // An unclaimed vault is claimed by the first computer to load this version,
+    // so a vault never converts arriving images on two computers by default.
+    if (!this.computer) this.computer = computerName();
+    if (!this.settings.automaticOn) {
+      this.settings.automaticOn = this.computer;
+      await this.saveData(this.settings);
+      this.log('automatic conversion claimed for this computer:', this.computer);
+    }
   }
 
   async saveSettings() { await this.saveData(this.settings); }
+
+  // The settings file changed on disk under a running Obsidian: with the vaults
+  // mirrored, an edit made on the other computer. Without reloading, the next
+  // save here would write the old settings back over it.
+  async onExternalSettingsChange() {
+    await this.loadSettings();
+    this.log('settings changed on disk (the other computer?), reloaded; automatic conversion runs on', this.settings.automaticOn);
+  }
 }
 
 /* ---------------- helpers ---------------- */
@@ -803,6 +856,17 @@ class ArchImagesSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.autoConvert).onChange(async (v) => { s.autoConvert = v; await save(); this.display(); }));
 
     if (s.autoConvert) {
+      const here = this.plugin.computer;
+      const cur = s.automaticOn || here;
+      new Setting(containerEl)
+        .setName('Automatic conversion runs on')
+        .setDesc('The one computer that converts images arriving in the vault. The vaults are mirrored between computers, so an image saved on one arrives on the other as new; with Obsidian open on both, both would convert it. Paste, drop, the menus and the commands work on every computer. ' + `This computer is ${here}.`)
+        .addDropdown((d) => {
+          d.addOption(here, `${here} (this computer)`);
+          if (cur !== here && cur !== '*') d.addOption(cur, cur);
+          d.addOption('*', 'Every computer');
+          d.setValue(cur).onChange(async (v) => { s.automaticOn = v; await save(); });
+        });
       new Setting(containerEl)
         .setName('Only in these folders')
         .setDesc('Comma-separated. Blank watches the whole vault.')

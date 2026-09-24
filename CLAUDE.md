@@ -252,6 +252,15 @@ are what a release ships; `dist/` is gitignored.
 Verify a release the way it actually installs: copy only `dist/main.js` and
 `dist/manifest.json` into a folder with no `lib/`, and load it.
 
+## One computer converts arriving images (0.6.0)
+
+The vaults are mirrored between the Mac and an Ubuntu PC (Syncthing, since 2026-09-25), so
+the `create` watcher would convert every arriving image on both machines. `automaticOn`
+names the one computer whose watcher runs; `computerName()` and `automaticRunsHere()` are
+copied word for word from ARCH After Clipping, whose `CLAUDE.md` has the reasoning. Paste,
+drop, the menus and the commands are started by hand and must stay ungated.
+`onExternalSettingsChange` reloads settings a sync changed on disk.
+
 ## Coupling to the other ARCH plugins
 
 None, deliberately. ARCH After Clipping saves images that arrive with a clipped

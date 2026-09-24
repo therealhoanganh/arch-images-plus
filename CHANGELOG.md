@@ -7,6 +7,23 @@
 
 
 
+## 0.6.0
+
+- **Images arriving in the vault are converted on one computer only, named in the new
+  setting *Automatic conversion runs on*.** Since 2026-09-25 the vaults are mirrored
+  between the Mac and an Ubuntu PC by Syncthing, so an image saved on one arrives on the
+  other as a new file; with Obsidian open on both, both converted it and left conflict
+  files. The setting holds a computer's name or *Every computer* and lives in the synced
+  settings file. Paste, drop, the menus and the commands work on every computer. A vault
+  without the setting is claimed by the first computer to load this version. The same
+  setting, with the same helper code, is in ARCH After Clipping 1.18.0.
+- **Settings changed on disk are reloaded** (`onExternalSettingsChange`), so a settings
+  edit synced from the other machine is not overwritten by this machine's next save.
+
+Tested in TESTFIELD with a noisy 300×200 PNG (a flat-colour one is smaller as PNG and is
+rightly left alone, which hides the result): with the PC named it stayed a PNG and nothing
+was logged; with the Mac named it became a 42 KB WebP.
+
 ## 0.5.3
 
 - **The Enter or Escape that closes the rename prompt no longer reaches the
