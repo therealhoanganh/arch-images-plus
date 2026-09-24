@@ -261,6 +261,12 @@ copied word for word from ARCH After Clipping, whose `CLAUDE.md` has the reasoni
 drop, the menus and the commands are started by hand and must stay ungated.
 `onExternalSettingsChange` reloads settings a sync changed on disk.
 
+The claim on first load saves the whole settings object, like any save from the settings
+tab. A vault that had no `data.json` (every vault until 0.6.0, so all of them followed the
+current defaults) therefore keeps the defaults of the day it claimed: CHAOS and THOUGHTS,
+which were open on 2026-09-25. The other vaults were given a `data.json` holding only
+`automaticOn`, so they still follow new defaults.
+
 ## Coupling to the other ARCH plugins
 
 None, deliberately. ARCH After Clipping saves images that arrive with a clipped
