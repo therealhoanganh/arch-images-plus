@@ -26,6 +26,16 @@ on which loads first. One handler, one pipeline, no race.
 - Links are rewritten by Obsidian itself, so embeds, aliases, frontmatter and
   canvas references all follow
 
+**A gallery view for Bases** (*ARCH Image gallery*)
+- Vertical or horizontal masonry, with columns, row height, gutter and corner radius
+- Images shuffled each time the base opens, or in the base's own order, with a
+  Shuffle button
+- Uses the base's Group by, including backlinks: each group under its own heading,
+  or kept together in one grid with no headings, the groups shuffled as wholes
+- Fast on thousands of images: images load only near the screen, thumbnails are
+  cached outside the vault, and the first draw waits for the vault to finish opening
+- A lightbox with arrow keys, and buttons to open the image or the note linking to it
+
 ## Requirements
 
 Desktop only. No external tools at all — every format is encoded in-process.
