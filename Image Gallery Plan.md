@@ -138,10 +138,10 @@ and are left alone.
   happened on Mac and on VALERIE SSD drive."* So the real test is CHAOS opening on the
   Mac with the new gallery; the cold-start test below was skipped at his word ("Let's
   skip it for now").
+- **On the Mac it loads and works**, his check on 2026-09-26 after 0.7.5: *"I check on
+  Mac, the plugin load and work well.."*
 - **Still to do:** he compares the two galleries on the Mac and removes Bases Image
-  Gallery. CHAOS on the Mac needs Obsidian restarted (or Images Plus turned off and on)
-  to load the newest version (0.7.5) once Syncthing has brought it over; until then its
-  gallery bases show an unknown view, or the older gallery.
+  Gallery.
 - **Test copy on the drive:** `4T-HDD/_Gallery Test/CHAOS Gallery Test` is today's
   CHAOS without video, music and `.git` (2,397 images), with the development build
   installed, `@IMAGES ARCH.base` (the same views, new type) beside `@IMAGES.base`,
