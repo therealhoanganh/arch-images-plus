@@ -7,6 +7,18 @@
 
 
 
+## 0.7.5 (2026-09-26)
+
+- **One text size and one baseline across the lightbox's top bar.** Hoang Anh: *"Inrease
+  size of note name and order number to match button, they are also not well-aligned
+  horizontally. Remote little dot between note name and order number too. Also add
+  resolution next to image title like name (resolution)"*. The note and counter were
+  the buttons' size already (13 px) but dimmed, beside 18 px icons, so they read
+  smaller. The whole bar (title, note, counter, button labels) is now the UI's medium
+  size (15 px), undimmed, on one 26 px line, and the four texts measure on the same
+  baseline. The dot is gone. The title reads *name (width × height)*, from the cached
+  size until the image is in.
+
 ## 0.7.4 (2026-09-26)
 
 - **The lightbox is titled like an open file.** Hoang Anh, after 0.7.3: *"I want title

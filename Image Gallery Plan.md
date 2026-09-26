@@ -166,7 +166,8 @@ and are left alone.
   which are now clickable over the tab bar (`CHANGELOG.md`). In 0.7.3, at his word, the
   details went under the buttons, with the counter staying beside them; in 0.7.4 the
   file name moved to the top middle, the note's name beside the counter, and the size
-  and date were dropped.
+  and date were dropped; in 0.7.5 the bar got one size and baseline, and the title the
+  size in pixels, *name (width × height)*.
 
 ## Still open
 

@@ -267,7 +267,7 @@ current defaults) therefore keeps the defaults of the day it claimed: CHAOS and 
 which were open on 2026-09-25. The other vaults were given a `data.json` holding only
 `automaticOn`, so they still follow new defaults.
 
-## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.4 the same day)
+## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.5 the same day)
 
 `lib/gallery.js` registers **ARCH Image gallery** (`arch-image-gallery`), built on
 2026-09-26 to replace Bases Image Gallery 0.1.6 in CHAOS, which froze the vault. His
