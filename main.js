@@ -133,8 +133,61 @@ class ArchImagesPlugin extends Plugin {
       },
     });
 
+    this.registerGallery();
+
     this.addSettingTab(new ArchImagesSettingTab(this.app, this));
     this.log('loaded', this.manifest.version);
+  }
+
+  onunload() {
+    if (this.thumbs) this.thumbs.close();
+    if (this.galleryStyle) this.galleryStyle.remove();
+  }
+
+  /* ---------------- the gallery view for Bases ---------------- */
+
+  // A view for Bases, built to replace Bases Image Gallery in CHAOS. The view
+  // itself is lib/gallery.js, the thumbnails lib/thumbs.js; why each part is
+  // there is in "Image Gallery Plan.md".
+  registerGallery() {
+    if (typeof this.registerBasesView !== 'function') return; // Obsidian before 1.10
+    const g = this.lib();
+    this.thumbs = new g.ThumbCache(this.vaultRoot(), (...a) => this.log('[gallery]', ...a));
+
+    // The first draw waits for this. Bases Image Gallery drew while the vault was
+    // still opening, and from a slow drive that held up the whole app. Links are
+    // resolved after the layout is ready, and the backlink groups need them, so
+    // it waits for 'resolved' too -- at most 3 s, because if that already fired
+    // before this plugin loaded it may not fire again for a long time.
+    this.galleryReady = new Promise((resolve) => {
+      this.app.workspace.onLayoutReady(() => {
+        let done = false;
+        const finish = () => { if (!done) { done = true; resolve(); } };
+        this.registerEvent(this.app.metadataCache.on('resolved', finish));
+        setTimeout(finish, 3000);
+      });
+    });
+
+    this.galleryStyle = document.head.createEl('style', { attr: { id: 'arch-images-plus-gallery' } });
+    this.galleryStyle.textContent = g.GALLERY_CSS;
+
+    const View = g.makeGalleryView(require('obsidian'), this);
+    this.registerBasesView(g.GALLERY_VIEW_TYPE, {
+      name: 'ARCH Image gallery',
+      icon: 'lucide-images',
+      factory: (controller, containerEl) => new View(controller, containerEl),
+      options: (config) => g.galleryOptions(config),
+    });
+
+    this.addCommand({
+      id: 'clear-gallery-thumbnails',
+      name: 'Clear the gallery thumbnail cache',
+      callback: async () => {
+        await this.thumbs.clear();
+        new Notice('ARCH Images Plus: gallery thumbnails cleared. They are made again as images are shown.');
+        this.log('[gallery] thumbnail cache cleared', this.thumbs.dir);
+      },
+    });
   }
 
   /* ---------------- lib loading ---------------- */
@@ -158,15 +211,24 @@ class ArchImagesPlugin extends Plugin {
   // The plugin folder is often a symlink into the repo during development, and
   // require resolves symlinks, so the cached keys live under the REAL path, not
   // the one under .obsidian. Both are matched.
+  //
+  // The `require` a plugin is handed is Obsidian's wrapper, and its `.cache` is
+  // not Node's; Electron's real one is `window.require.cache` (found in ARCH
+  // Recreations). Both caches are walked, since which one holds the entries is
+  // not something to rely on.
   dropLibFromRequireCache(dir) {
-    if (typeof require === 'undefined' || !require.cache) return;
+    const caches = [];
+    if (typeof window !== 'undefined' && window.require && window.require.cache) caches.push(window.require.cache);
+    if (typeof require !== 'undefined' && require.cache && !caches.includes(require.cache)) caches.push(require.cache);
     const roots = [dir];
     try { roots.push(fs.realpathSync(dir)); } catch (_) { /* not a link, or gone */ }
     let dropped = 0;
-    for (const key of Object.keys(require.cache)) {
-      if (roots.some((root) => key.startsWith(root + path.sep))) {
-        delete require.cache[key];
-        dropped++;
+    for (const cache of caches) {
+      for (const key of Object.keys(cache)) {
+        if (roots.some((root) => key.startsWith(root + path.sep))) {
+          delete cache[key];
+          dropped++;
+        }
       }
     }
     if (dropped) this.log(`reloaded ${dropped} lib module(s) from disk`);

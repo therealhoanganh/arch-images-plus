@@ -27,7 +27,7 @@ const result = await build({
   // nothing in lib/ may require it -- that module is injected into main.js's
   // scope only -- and this makes a stray require fail loudly at build time
   // rather than silently at load time.
-  external: ['obsidian', 'electron', 'path', 'fs', 'os', 'https', 'child_process'],
+  external: ['obsidian', 'electron', 'path', 'fs', 'os', 'https', 'child_process', 'crypto'],
   legalComments: 'none',
 });
 
