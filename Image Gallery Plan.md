@@ -128,6 +128,20 @@ and are left alone.
 - Steps 1 to 3 are built (view, thumbnail cache, lightbox) and work in TESTFIELD on
   the 1,519 H-games images: grouping by game (119 groups, as the Table view shows),
   shuffle, horizontal layout, the lightbox, one 330 ms draw after a reload.
+- **Released as 0.7.0 on 2026-09-26** and running in CHAOS (copied in by hand, BRAT
+  agrees with it). Switched: `@IMAGES.base` (All and Games shuffled, Lewds and
+  Cosplayers in the base's order, as before), `Lewds/H-games/@IMAGES.base` (images and
+  games shuffled; he had already switched its type himself) and `Games/@GAMES.base`
+  (base order). The first draw of the H-games base in CHAOS on the PC: 1,518 images,
+  119 groups, about 350 ms.
+- **Where the freeze happens, his finding:** *"It didn't happen on PC and 4TB-HDD, it
+  happened on Mac and on VALERIE SSD drive."* So the real test is CHAOS opening on the
+  Mac with the new gallery; the cold-start test below was skipped at his word ("Let's
+  skip it for now").
+- **Still to do:** he compares the two galleries on the Mac and removes Bases Image
+  Gallery. CHAOS on the Mac needs Obsidian restarted (or Images Plus turned off and on)
+  to load 0.7.0 once Syncthing has brought it over; until then its gallery bases show
+  an unknown view.
 - **Test copy on the drive:** `4T-HDD/_Gallery Test/CHAOS Gallery Test` is today's
   CHAOS without video, music and `.git` (2,397 images), with the development build
   installed, `@IMAGES ARCH.base` (the same views, new type) beside `@IMAGES.base`,
@@ -135,15 +149,8 @@ and are left alone.
   *"Yes, it works so far!"* **Still to do there:** open `@IMAGES ARCH.base` as the
   first tab from a cold cache and compare (`obsidian vault="CHAOS Gallery Test" …`;
   the eviction script is `os.posix_fadvise(..., POSIX_FADV_DONTNEED)` over every file).
-- **Built:** `dist/main.js` (87.6 KB) and `dist/manifest.json` for 0.7.0, built on
-  the Mac from the PC over `ssh mac` (the Mac has Node 24; the PC has none, and does
-  not need it while that works).
-- **Next:** the rest of step 4. Push, tag and release 0.7.0, change `type:` in CHAOS's
-  `@IMAGES.base`, `Lewds/H-games/@IMAGES.base` and **`Games/@GAMES.base`** (a third
-  base on the old gallery, found 2026-09-26; it has no `Random` sort), and drop the
-  `formula.Random` sort from the first two. CHAOS still runs Images Plus 0.6.0 until
-  BRAT fetches the release. Bases Image Gallery stays installed for him to compare and
-  remove.
+- **Built** on the Mac from the PC over `ssh mac` (the Mac has Node 24; the PC has
+  none and does not need it while that works).
 - **Delete when done:** `TESTFIELD/_/Gallery Test/` (hard links to CHAOS's H-games
   images, 118 stub notes, two test bases; it syncs to the Mac as 444 MB) and
   `4T-HDD/_Gallery Test/`.

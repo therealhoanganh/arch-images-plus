@@ -7,7 +7,15 @@
 
 
 
-## 0.7.0 — not released yet (2026-09-26)
+## 0.7.0 (2026-09-26)
+
+- **Released the same day, without the cold-start test from the drive.** Hoang Anh
+  tried it and said to skip the test: *"It didn't happen on PC and 4TB-HDD, it
+  happened on Mac and on VALERIE SSD drive. Let's skip it for now."* So the freeze
+  belongs to the Mac, and the test copy on 4T-HDD opened from the PC could not have
+  shown it. Built on the Mac from the PC over `ssh mac`. Copied into CHAOS by hand;
+  its three gallery bases were switched over, each view keeping its old order (a
+  `Random` sort became *Shuffled*, no sort became *As the base sorts them*).
 
 - **ARCH Image gallery, a view for Bases**, to replace Bases Image Gallery in CHAOS.
   Hoang Anh asked for shuffling built in, grouping by backlink with the groups
