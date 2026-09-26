@@ -163,7 +163,8 @@ and are left alone.
   `groupDisplay: together`.
 - **0.7.2, the same day: his two UI notes.** The view menu's toggle became a dropdown
   at the end of the menu, and the lightbox's details moved up beside its buttons,
-  which are now clickable over the tab bar (`CHANGELOG.md`).
+  which are now clickable over the tab bar (`CHANGELOG.md`). In 0.7.3, at his word, the
+  details went under the buttons, with the counter staying beside them.
 
 ## Still open
 

@@ -7,6 +7,14 @@
 
 
 
+## 0.7.3 (2026-09-26)
+
+- **The lightbox's details go under its buttons.** Hoang Anh, after 0.7.2: *"I want
+  image info to be placed under instead of next to buttons, keep order of image
+  1/1518 next to buttons though."* The top-right corner is now two lines: the counter
+  and the buttons, then the name and note · size in pixels · size on disk · date
+  under them, right-aligned. The image starts a little lower to leave them room.
+
 ## 0.7.2 (2026-09-26)
 
 - **The view menu's one toggle is a dropdown now, and last.** Hoang Anh: *"the toggle
