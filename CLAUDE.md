@@ -252,22 +252,25 @@ are what a release ships; `dist/` is gitignored.
 Verify a release the way it actually installs: copy only `dist/main.js` and
 `dist/manifest.json` into a folder with no `lib/`, and load it.
 
-## One computer converts arriving images (0.6.0)
+## Which computer converts arriving images (0.6.0; every computer by default since 0.7.7)
 
 The vaults are mirrored between the Mac and an Ubuntu PC (Syncthing, since 2026-09-25), so
-the `create` watcher would convert every arriving image on both machines. `automaticOn`
-names the one computer whose watcher runs; `computerName()` and `automaticRunsHere()` are
+the `create` watcher can convert an arriving image on both machines. `automaticOn`
+names the one computer whose watcher runs, or `*` for every computer. **The default is
+`*` since 0.7.7, his choice** (*"set auto-convert on "Every Computer" by default"*); until
+then the first computer to load a vault claimed it, so the vaults set up before 0.7.7 name
+the Mac unless changed. After Clipping keeps the claim; `computerName()` and `automaticRunsHere()` are
 copied word for word from ARCH After Clipping, whose `CLAUDE.md` has the reasoning. Paste,
 drop, the menus and the commands are started by hand and must stay ungated.
 `onExternalSettingsChange` reloads settings a sync changed on disk.
 
-The claim on first load saves the whole settings object, like any save from the settings
+Until 0.7.7, the claim on first load saved the whole settings object, like any save from the settings
 tab. A vault that had no `data.json` (every vault until 0.6.0, so all of them followed the
 current defaults) therefore keeps the defaults of the day it claimed: CHAOS and THOUGHTS,
 which were open on 2026-09-25. The other vaults were given a `data.json` holding only
 `automaticOn`, so they still follow new defaults.
 
-## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.6 the same day)
+## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.7 the same day)
 
 `lib/gallery.js` registers **ARCH Image Gallery** (`arch-image-gallery`), built on
 2026-09-26 to replace Bases Image Gallery 0.1.6 in CHAOS, which froze the vault. His

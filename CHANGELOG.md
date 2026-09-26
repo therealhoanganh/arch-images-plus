@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.7 (2026-09-26)
+
+- **Automatic conversion runs on every computer by default.** Hoang Anh: *"Also set
+  auto-convert on "Every Computer" by default."* Until now a vault with no choice saved
+  was claimed by the first computer to load it (0.6.0), so every vault except CHAOS
+  names the Mac. Now `automaticOn` defaults to `*`, nothing is claimed or saved on load,
+  and *Every Computer* comes first in the dropdown. A choice already saved in a vault is
+  kept. The risk the claim guarded against still exists: with Obsidian open on both
+  computers, an image that syncs across before it is converted can be converted on both.
+  The setting's description now says to pick one computer if that happens.
+
 ## 0.7.6 (2026-09-26)
 
 - **A review against Vercel's Web Interface Guidelines** (the `web-design-guidelines`

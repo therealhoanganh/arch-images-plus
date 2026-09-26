@@ -12,8 +12,9 @@ const os = require('os');
 // so with Obsidian open on both, both would process it: two downloads, two
 // conversions, conflict files. The setting automaticOn names the one computer
 // that runs the automatic work; the settings file syncs, so both machines read
-// the same answer. Commands and menus run anywhere. Shared with ARCH After
-// Clipping, copied word for word.
+// the same answer. Commands and menus run anywhere. computerName and
+// automaticRunsHere are shared with ARCH After Clipping, copied word for word;
+// the default is not: here it is every computer (0.7.7, his choice).
 //
 // The name is macOS's Local Hostname there, because the kernel hostname can
 // change with the network; elsewhere os.hostname().
@@ -29,8 +30,7 @@ function computerName() {
   return os.hostname().replace(/\.local$/, '');
 }
 
-// automaticOn: '' is unclaimed (the first computer to load this version claims
-// it), '*' is every computer, anything else one computer's name.
+// automaticOn: '' or '*' is every computer, anything else one computer's name.
 function automaticRunsHere(settings, here) {
   const a = String(settings.automaticOn || '');
   return !a || a === '*' || a === here;
@@ -88,10 +88,11 @@ const DEFAULT_SETTINGS = {
   bulkDryRun: true,
 
   setupDone: false,
-  // The one computer whose watcher converts images arriving in the vault
-  // (0.6.0). '' unclaimed, '*' every computer, else a computer's name. Paste,
-  // drop, the menus and the commands work everywhere.
-  automaticOn: '',
+  // The computer whose watcher converts images arriving in the vault (0.6.0).
+  // '*' every computer, else a computer's name. Paste, drop, the menus and the
+  // commands work everywhere. Every computer by default since 0.7.7, at his
+  // word; until then the first computer to load a vault claimed it.
+  automaticOn: '*',
 };
 
 const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'avif', 'bmp', 'gif', 'tif', 'tiff', 'heic', 'heif'];
@@ -750,14 +751,7 @@ class ArchImagesPlugin extends Plugin {
     if (this.settings.format === 'avif') this.settings.format = 'webp';
     if (this.settings.bulkFormat === 'avif') this.settings.bulkFormat = 'webp';
     delete this.settings.ffmpegPath;
-    // An unclaimed vault is claimed by the first computer to load this version,
-    // so a vault never converts arriving images on two computers by default.
     if (!this.computer) this.computer = computerName();
-    if (!this.settings.automaticOn) {
-      this.settings.automaticOn = this.computer;
-      await this.saveData(this.settings);
-      this.log('automatic conversion claimed for this computer:', this.computer);
-    }
   }
 
   async saveSettings() { await this.saveData(this.settings); }
@@ -964,14 +958,14 @@ class ArchImagesSettingTab extends PluginSettingTab {
 
     if (s.autoConvert) {
       const here = this.plugin.computer;
-      const cur = s.automaticOn || here;
+      const cur = s.automaticOn || '*';
       new Setting(containerEl)
         .setName('Automatic Conversion Runs On')
-        .setDesc('The one computer that converts images arriving in the vault. The vaults are mirrored between computers, so an image saved on one arrives on the other as new; with Obsidian open on both, both would convert it. Paste, drop, the menus and the commands work on every computer. ' + `This computer is ${here}.`)
+        .setDesc('Which computer converts images arriving in the vault. The vaults are mirrored between computers, so an image saved on one arrives on the other as new; with Obsidian open on both, both may convert it. Pick one computer if that happens. Paste, drop, the menus and the commands work on every computer. ' + `This computer is ${here}.`)
         .addDropdown((d) => {
+          d.addOption('*', 'Every Computer');
           d.addOption(here, `${here} (This Computer)`);
           if (cur !== here && cur !== '*') d.addOption(cur, cur);
-          d.addOption('*', 'Every Computer');
           d.setValue(cur).onChange(async (v) => { s.automaticOn = v; await save(); });
         });
       new Setting(containerEl)
