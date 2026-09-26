@@ -135,10 +135,15 @@ and are left alone.
   *"Yes, it works so far!"* **Still to do there:** open `@IMAGES ARCH.base` as the
   first tab from a cold cache and compare (`obsidian vault="CHAOS Gallery Test" …`;
   the eviction script is `os.posix_fadvise(..., POSIX_FADV_DONTNEED)` over every file).
-- **Next:** step 4. Build on the Mac (`npm run build`; the PC has no Node), release
-  0.7.0, change `type:` in CHAOS's `@IMAGES.base` and `Lewds/H-games/@IMAGES.base`
-  and drop their `formula.Random` sort. Bases Image Gallery stays installed for him to
-  compare and remove.
+- **Built:** `dist/main.js` (87.6 KB) and `dist/manifest.json` for 0.7.0, built on
+  the Mac from the PC over `ssh mac` (the Mac has Node 24; the PC has none, and does
+  not need it while that works).
+- **Next:** the rest of step 4. Push, tag and release 0.7.0, change `type:` in CHAOS's
+  `@IMAGES.base`, `Lewds/H-games/@IMAGES.base` and **`Games/@GAMES.base`** (a third
+  base on the old gallery, found 2026-09-26; it has no `Random` sort), and drop the
+  `formula.Random` sort from the first two. CHAOS still runs Images Plus 0.6.0 until
+  BRAT fetches the release. Bases Image Gallery stays installed for him to compare and
+  remove.
 - **Delete when done:** `TESTFIELD/_/Gallery Test/` (hard links to CHAOS's H-games
   images, 118 stub notes, two test bases; it syncs to the Mac as 444 MB) and
   `4T-HDD/_Gallery Test/`.
