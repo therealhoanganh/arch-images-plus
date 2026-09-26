@@ -140,8 +140,8 @@ and are left alone.
   skip it for now").
 - **Still to do:** he compares the two galleries on the Mac and removes Bases Image
   Gallery. CHAOS on the Mac needs Obsidian restarted (or Images Plus turned off and on)
-  to load 0.7.0 once Syncthing has brought it over; until then its gallery bases show
-  an unknown view.
+  to load the newest version (0.7.5) once Syncthing has brought it over; until then its
+  gallery bases show an unknown view, or the older gallery.
 - **Test copy on the drive:** `4T-HDD/_Gallery Test/CHAOS Gallery Test` is today's
   CHAOS without video, music and `.git` (2,397 images), with the development build
   installed, `@IMAGES ARCH.base` (the same views, new type) beside `@IMAGES.base`,
