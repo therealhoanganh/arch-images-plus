@@ -7,6 +7,30 @@
 
 
 
+## 0.7.2 (2026-09-26)
+
+- **The view menu's one toggle is a dropdown now, and last.** Hoang Anh: *"the toggle
+  on of button is middle of the slide down, which is not nice visually."* Bases draws a
+  toggle small and on its own line between full-width dropdowns. *One group per link*
+  became **Grouped by a list (backlinks, tags)**: *One group per link or tag* /
+  *One group per whole list* (`listGroups: split | whole`), placed after *Groups* and
+  *Group order*. Bases that still carry `splitLists: true/false` are read as before.
+- **The lightbox's details sit beside its buttons.** His words: *"when I open image,
+  the image info and open button are on opposite size of each other! Make me have to
+  cross my eyes a whole screen! Move image info to top corner with the button
+  please!"* Name on one line and note · size in pixels · size on disk · date on the
+  next, right-aligned against the counter and *Open note*, *Open image*, close; nothing
+  at the bottom now, so the image gets that space. Everything is at the right, clear of
+  the Mac's window buttons in the top-left corner.
+- **The buttons at the top could not be clicked** (his report after the move: *"both
+  button and image info are way over top conrner and unable to click on"*). The
+  lightbox covers Obsidian's tab bar, which drags the window when the frame is hidden,
+  so a click there went to the window. The lightbox is marked `no-drag`.
+- **A base tab open when the plugin is reloaded or updated is rebuilt.** It kept the
+  gallery made by the old code while the new styles applied, which is what put the
+  details at the very top edge in his test. Only when the layout is already ready, so
+  never at vault startup.
+
 ## 0.7.1 (2026-09-26)
 
 - **Groups kept together, without headings.** Hoang Anh, after using grouping by

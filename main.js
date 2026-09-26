@@ -191,6 +191,16 @@ class ArchImagesPlugin extends Plugin {
       options: (config) => g.galleryOptions(config),
     });
 
+    // A base tab already open when the plugin is reloaded or updated keeps the
+    // gallery made by the old code, with the new styles, so its lightbox came
+    // out broken. Such tabs are rebuilt. Not at vault startup (the layout is not
+    // ready yet then), when no gallery exists and the tabs are still loading.
+    if (this.app.workspace.layoutReady) {
+      for (const leaf of this.app.workspace.getLeavesOfType('bases')) {
+        if (typeof leaf.rebuildView === 'function') leaf.rebuildView();
+      }
+    }
+
     this.addCommand({
       id: 'clear-gallery-thumbnails',
       name: 'Clear the gallery thumbnail cache',

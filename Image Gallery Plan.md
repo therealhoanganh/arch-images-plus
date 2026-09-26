@@ -161,6 +161,9 @@ and are left alone.
   the shortest column instead of using CSS columns, so the lightbox's next image is the
   one to the right. `Lewds/H-games/@IMAGES.base` got its Group by backlink back, with
   `groupDisplay: together`.
+- **0.7.2, the same day: his two UI notes.** The view menu's toggle became a dropdown
+  at the end of the menu, and the lightbox's details moved up beside its buttons,
+  which are now clickable over the tab bar (`CHANGELOG.md`).
 
 ## Still open
 
