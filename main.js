@@ -157,14 +157,26 @@ class ArchImagesPlugin extends Plugin {
     // The first draw waits for this. Bases Image Gallery drew while the vault was
     // still opening, and from a slow drive that held up the whole app. Links are
     // resolved after the layout is ready, and the backlink groups need them, so
-    // it waits for 'resolved' too -- at most 3 s, because if that already fired
-    // before this plugin loaded it may not fire again for a long time.
+    // it waits for the metadata cache too.
+    //
+    // `onCleanCache` is internal (not in obsidian.d.ts) but is what Obsidian
+    // itself uses: it calls back at once when the cache is already clean, and
+    // when it becomes clean otherwise. Waiting for the public 'resolved' event
+    // instead cost a fixed 3 s on every open (measured 2026-09-26), because it
+    // had usually fired before this plugin was listening. If the internal hook
+    // ever disappears, 'resolved' and a timer take over.
     this.galleryReady = new Promise((resolve) => {
       this.app.workspace.onLayoutReady(() => {
         let done = false;
         const finish = () => { if (!done) { done = true; resolve(); } };
-        this.registerEvent(this.app.metadataCache.on('resolved', finish));
-        setTimeout(finish, 3000);
+        const mc = this.app.metadataCache;
+        if (typeof mc.onCleanCache === 'function') {
+          mc.onCleanCache(finish);
+          setTimeout(finish, 30000);
+        } else {
+          this.registerEvent(mc.on('resolved', finish));
+          setTimeout(finish, 3000);
+        }
       });
     });
 
