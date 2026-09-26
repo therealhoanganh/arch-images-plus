@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.7.6 (2026-09-26)
+
+- **A review against Vercel's Web Interface Guidelines** (the `web-design-guidelines`
+  skill, its first use). Hoang Anh: *"Let's try apply all"*, meaning every finding worth
+  fixing and every small one.
+  - **Keyboard.** A gallery card is now a button to the keyboard: Tab reaches it, Enter
+    or Space opens the lightbox. In the lightbox, Tab goes round its own buttons instead
+    of the page behind, and closing puts focus back on the card that was opened. The
+    lightbox is marked as a dialog, its image has the file name as alt text, and the
+    icons beside button labels are hidden from screen readers.
+  - **Focus rings.** The lightbox's buttons had `box-shadow: none`, which removed
+    Obsidian's keyboard focus ring; they now show a white ring, and a card shows an
+    accent outline, both only when focus came from the keyboard.
+  - **The counter uses tabular figures**, so the note name beside it no longer shifts
+    as the count goes from 9 to 10.
+  - **Small things.** "1 image in 1 group" instead of "1 images in 1 groups"; a card
+    brightens under the mouse; the 120 ms fade-in is off when the system asks for
+    reduced motion; the Shuffle tooltip says what it does instead of repeating the
+    label; "Converting…" with a real ellipsis; the paste error and "No note is open"
+    say what to do next; the bulk dialog's button says how many images it converts.
+  - **Settings.** Headings are Obsidian's own setting headings (`setHeading()`) instead
+    of plain `h3`. *Maximum long edge*, *Skip images under* and *Wait before converting*
+    are number fields, and anything that is not a number is no longer saved: it used to
+    become 0, which for the long edge means "never resize", without a word. Spellcheck
+    is off in the path, template and extension fields and in the rename box.
+- **Title Case for labels.** The review set aside the guideline's Title Case because
+  Obsidian uses sentence case; Hoang Anh: *"Actually, I much prefer Title Case."* The
+  view name (*ARCH Image Gallery*), the view menu's options and choices, the settings'
+  headings, names and choices, buttons, dialog titles, the right-click item and the
+  command names are now Title Case (Chicago: articles, short conjunctions and
+  prepositions stay lower case). Descriptions, tooltips and notices stay sentence case,
+  being sentences. Only display text changed; view keys, option values and command ids
+  are the same, so no base or hotkey needs touching.
+
+
 
 
 

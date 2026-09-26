@@ -26,7 +26,7 @@ on which loads first. One handler, one pipeline, no race.
 - Links are rewritten by Obsidian itself, so embeds, aliases, frontmatter and
   canvas references all follow
 
-**A gallery view for Bases** (*ARCH Image gallery*)
+**A gallery view for Bases** (*ARCH Image Gallery*)
 - Vertical or horizontal masonry, with columns, row height, gutter and corner radius
 - Images shuffled each time the base opens, or in the base's own order, with a
   Shuffle button

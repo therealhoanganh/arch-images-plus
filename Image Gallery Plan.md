@@ -168,6 +168,10 @@ and are left alone.
   file name moved to the top middle, the note's name beside the counter, and the size
   and date were dropped; in 0.7.5 the bar got one size and baseline, and the title the
   size in pixels, *name (width × height)*.
+- **0.7.6, the same day: the web-design-guidelines review.** The first use of the skill:
+  keyboard access to cards and the lightbox, visible focus rings, a steady counter,
+  number fields in the settings, and Title Case for every label, his preference
+  (*"Actually, I much prefer Title Case."*). `CHANGELOG.md` has the list.
 
 ## Still open
 

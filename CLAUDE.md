@@ -267,9 +267,9 @@ current defaults) therefore keeps the defaults of the day it claimed: CHAOS and 
 which were open on 2026-09-25. The other vaults were given a `data.json` holding only
 `automaticOn`, so they still follow new defaults.
 
-## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.5 the same day)
+## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.6 the same day)
 
-`lib/gallery.js` registers **ARCH Image gallery** (`arch-image-gallery`), built on
+`lib/gallery.js` registers **ARCH Image Gallery** (`arch-image-gallery`), built on
 2026-09-26 to replace Bases Image Gallery 0.1.6 in CHAOS, which froze the vault. His
 request, the diagnosis of the old plugin and the plan are in `Image Gallery Plan.md`;
 read it before changing the view. The rules that keep it fast:
@@ -301,6 +301,15 @@ read it before changing the view. The rules that keep it fast:
   drags the window in Obsidian's hidden frame and would swallow clicks on its buttons.
 - **The shuffle is the view's own**: ranks held per view instance, so an update never
   reorders; the Shuffle button or reopening makes new ones.
+- **Labels are Title Case, his preference** (0.7.6): view menu, settings names and
+  headings, buttons, dialog titles, commands. Descriptions, tooltips and notices stay
+  sentence case. Change display text only; option values and command ids are what
+  bases and hotkeys store.
+- **Keyboard and focus** (0.7.6): cards are `tabindex=0 role=button` (Enter/Space
+  open), the lightbox traps Tab and returns focus on close. Never set `box-shadow:
+  none` on a focused `clickable-icon`: that is Obsidian's focus ring. `:focus-visible`
+  never matches while the window is not focused, so to see a ring from `obsidian eval`
+  force it with the devtools protocol (`webContents.debugger`, `CSS.forcePseudoState`).
 - `plugin.galleryDraws` holds the last 20 draws (time after load, ms, counts), for
   checking from the console or `obsidian eval`.
 

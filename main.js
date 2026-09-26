@@ -119,12 +119,12 @@ class ArchImagesPlugin extends Plugin {
 
     this.addCommand({
       id: 'convert-vault-images',
-      name: 'Convert images in the whole vault',
+      name: 'Convert Images in the Whole Vault',
       callback: () => this.bulkConvert(this.allImages()),
     });
     this.addCommand({
       id: 'convert-images-in-note',
-      name: 'Convert images linked from the active note',
+      name: 'Convert Images Linked from the Active Note',
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!file) return false;
@@ -185,7 +185,7 @@ class ArchImagesPlugin extends Plugin {
 
     const View = g.makeGalleryView(require('obsidian'), this);
     this.registerBasesView(g.GALLERY_VIEW_TYPE, {
-      name: 'ARCH Image gallery',
+      name: 'ARCH Image Gallery',
       icon: 'lucide-images',
       factory: (controller, containerEl) => new View(controller, containerEl),
       options: (config) => g.galleryOptions(config),
@@ -203,7 +203,7 @@ class ArchImagesPlugin extends Plugin {
 
     this.addCommand({
       id: 'clear-gallery-thumbnails',
-      name: 'Clear the gallery thumbnail cache',
+      name: 'Clear the Gallery Thumbnail Cache',
       callback: async () => {
         await this.thumbs.clear();
         new Notice('ARCH Images Plus: gallery thumbnails cleared. They are made again as images are shown.');
@@ -325,7 +325,7 @@ class ArchImagesPlugin extends Plugin {
   enqueue(task) {
     this.queue = this.queue.then(task, task).catch((e) => {
       console.error('[arch-images]', e);
-      new Notice(`Image failed: ${e.message}`, 8000);
+      new Notice(`Image failed: ${e.message}. Try it again; the full error is in the developer console.`, 8000);
     });
     return this.queue;
   }
@@ -558,7 +558,7 @@ class ArchImagesPlugin extends Plugin {
     }
     if (!targets.length) return;
     menu.addItem((item) => {
-      item.setTitle(`Convert ${targets.length} image${targets.length > 1 ? 's' : ''} to ${this.settings.bulkFormat.toUpperCase()}`)
+      item.setTitle(`Convert ${targets.length.toLocaleString()} Image${targets.length > 1 ? 's' : ''} to ${this.settings.bulkFormat.toUpperCase()}`)
         .setIcon('image-file')
         .onClick(() => this.bulkConvert(targets));
     });
@@ -586,7 +586,7 @@ class ArchImagesPlugin extends Plugin {
 
   async runBulk(files) {
     const { convertBlob, formatInfo } = this.lib();
-    const notice = new Notice('Converting...', 0);
+    const notice = new Notice('Converting…', 0);
     let done = 0, saved = 0, failed = 0, skipped = 0;
     const started = Date.now();
     const reasons = {};
@@ -779,6 +779,29 @@ function kb(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+// A settings text box for a whole number of 0 or more. Only a real number is
+// saved: anything else used to become 0, which for the long edge means "never
+// resize", without a word.
+function numberInput(t, value, set) {
+  t.inputEl.type = 'number';
+  t.inputEl.min = '0';
+  t.inputEl.inputMode = 'numeric';
+  t.setValue(String(value)).onChange(async (v) => {
+    const n = Number(v);
+    if (String(v).trim() === '' || !Number.isFinite(n) || n < 0) return;
+    await set(Math.round(n));
+  });
+  return t;
+}
+
+// A settings text box holding paths, tokens or extensions, which spellcheck
+// only underlines.
+function plainInput(t) {
+  t.inputEl.spellcheck = false;
+  t.inputEl.setAttr('autocomplete', 'off');
+  return t;
+}
+
 function mimeForExt(ext) {
   const e = String(ext || '').toLowerCase();
   if (e === 'jpg' || e === 'jpeg') return 'image/jpeg';
@@ -796,8 +819,8 @@ class RenameModal extends Modal {
     this.answered = false;
   }
   onOpen() {
-    this.titleEl.setText('Name this image');
-    const input = this.contentEl.createEl('input', { type: 'text', value: this.suggested });
+    this.titleEl.setText('Name This Image');
+    const input = this.contentEl.createEl('input', { type: 'text', value: this.suggested, attr: { 'aria-label': 'Image name', spellcheck: 'false', autocomplete: 'off' } });
     input.style.width = '100%';
     input.focus();
     input.select();
@@ -816,7 +839,7 @@ class RenameModal extends Modal {
       this.close();
     });
     const row = this.contentEl.createDiv({ cls: 'modal-button-container' });
-    row.createEl('button', { text: 'Save', cls: 'mod-cta' }).onclick = () => {
+    row.createEl('button', { text: 'Save Name', cls: 'mod-cta' }).onclick = () => {
       this.answered = true; this.resolve(input.value.trim()); this.close();
     };
   }
@@ -831,7 +854,7 @@ class BulkPreviewModal extends Modal {
     this.onConfirm = onConfirm;
   }
   onOpen() {
-    this.titleEl.setText(`Convert ${this.files.length} images to ${this.plugin.settings.bulkFormat.toUpperCase()}`);
+    this.titleEl.setText(`Convert ${this.files.length.toLocaleString()} Images to ${this.plugin.settings.bulkFormat.toUpperCase()}`);
     const total = this.files.reduce((n, f) => n + (f.stat ? f.stat.size : 0), 0);
     this.contentEl.createEl('p', {
       text: `${kb(total)} of images. Originals are replaced in place and every link is updated by Obsidian. This cannot be undone from inside Obsidian — make sure the vault is backed up or committed.`,
@@ -844,7 +867,7 @@ class BulkPreviewModal extends Modal {
 
     const row = this.contentEl.createDiv({ cls: 'modal-button-container' });
     row.createEl('button', { text: 'Cancel' }).onclick = () => this.close();
-    row.createEl('button', { text: 'Convert', cls: 'mod-cta' }).onclick = () => { this.close(); this.onConfirm(); };
+    row.createEl('button', { text: `Convert ${this.files.length.toLocaleString()} Images`, cls: 'mod-cta' }).onclick = () => { this.close(); this.onConfirm(); };
   }
 }
 
@@ -859,13 +882,13 @@ class ArchImagesSettingTab extends PluginSettingTab {
     const s = this.plugin.settings;
     const save = () => this.plugin.saveSettings();
 
-    containerEl.createEl('h3', { text: 'Conversion' });
+    new Setting(containerEl).setName('Conversion').setHeading();
 
     new Setting(containerEl)
       .setName('Format')
       .setDesc('WebP is the smallest of these for almost every image.')
       .addDropdown((d) => d
-        .addOptions({ webp: 'WebP', jpeg: 'JPEG', png: 'PNG', keep: 'Keep original' })
+        .addOptions({ webp: 'WebP', jpeg: 'JPEG', png: 'PNG', keep: 'Keep Original' })
         .setValue(s.format)
         .onChange(async (v) => { s.format = v; await save(); this.display(); }));
 
@@ -878,64 +901,64 @@ class ArchImagesSettingTab extends PluginSettingTab {
     }
 
     new Setting(containerEl)
-      .setName('Maximum long edge')
+      .setName('Maximum Long Edge')
       .setDesc('Pixels. 0 never resizes. Images smaller than this are never enlarged.')
-      .addText((t) => t.setValue(String(s.maxLongEdge)).onChange(async (v) => { s.maxLongEdge = Number(v) || 0; await save(); }));
+      .addText((t) => numberInput(t, s.maxLongEdge, async (n) => { s.maxLongEdge = n; await save(); }));
 
     new Setting(containerEl)
-      .setName('Keep the original when conversion makes it bigger')
+      .setName('Keep the Original When Conversion Makes It Bigger')
       .addToggle((t) => t.setValue(s.skipIfLarger).onChange(async (v) => { s.skipIfLarger = v; await save(); }));
 
     new Setting(containerEl)
-      .setName('Leave animated images alone')
+      .setName('Leave Animated Images Alone')
       .setDesc('A GIF decodes as its first frame only, so converting one throws the animation away.')
       .addToggle((t) => t.setValue(s.skipAnimated).onChange(async (v) => { s.skipAnimated = v; await save(); }));
 
     new Setting(containerEl)
-      .setName('Skip images under')
+      .setName('Skip Images Under')
       .setDesc('KB. 0 converts everything.')
-      .addText((t) => t.setValue(String(s.skipSmallerThanKb)).onChange(async (v) => { s.skipSmallerThanKb = Number(v) || 0; await save(); }));
+      .addText((t) => numberInput(t, s.skipSmallerThanKb, async (n) => { s.skipSmallerThanKb = n; await save(); }));
 
-    containerEl.createEl('h3', { text: 'Naming' });
+    new Setting(containerEl).setName('Naming').setHeading();
 
     new Setting(containerEl)
-      .setName('Name template')
+      .setName('Name Template')
       .setDesc('Tokens: {{noteName}} {{date}} {{time}} {{year}} {{month}} {{day}} {{counter}} {{originalName}} {{width}} {{height}} {{ms}}')
-      .addText((t) => t.setValue(s.nameTemplate).onChange(async (v) => { s.nameTemplate = v; await save(); }));
+      .addText((t) => plainInput(t).setValue(s.nameTemplate).onChange(async (v) => { s.nameTemplate = v; await save(); }));
 
     new Setting(containerEl)
-      .setName('Ask for a name on every paste')
+      .setName('Ask for a Name on Every Paste')
       .addToggle((t) => t.setValue(s.askOnPaste).onChange(async (v) => { s.askOnPaste = v; await save(); }));
 
-    containerEl.createEl('h3', { text: 'Location' });
+    new Setting(containerEl).setName('Location').setHeading();
 
     new Setting(containerEl)
-      .setName('Where new images go')
+      .setName('Where New Images Go')
       .setDesc("The default hands this to Obsidian's own attachment setting, so the vault decides and this plugin does not. The other modes are for putting pasted images somewhere different without changing that vault-wide setting.")
       .addDropdown((d) => d
         .addOptions({
-          obsidian: "Obsidian's attachment setting",
-          vault: 'Vault root',
-          same: 'Same folder as the note',
-          subfolder: 'Subfolder beside the note',
-          specified: 'One folder',
+          obsidian: "Obsidian's Attachment Setting",
+          vault: 'Vault Root',
+          same: 'Same Folder as the Note',
+          subfolder: 'Subfolder beside the Note',
+          specified: 'One Folder',
         })
         .setValue(s.locationMode)
         .onChange(async (v) => { s.locationMode = v; await save(); this.display(); }));
 
     if (s.locationMode === 'subfolder') {
-      new Setting(containerEl).setName('Subfolder name')
-        .addText((t) => t.setValue(s.subfolder).onChange(async (v) => { s.subfolder = v; await save(); }));
+      new Setting(containerEl).setName('Subfolder Name')
+        .addText((t) => plainInput(t).setValue(s.subfolder).onChange(async (v) => { s.subfolder = v; await save(); }));
     }
     if (s.locationMode === 'specified') {
       new Setting(containerEl).setName('Folder').setDesc('Tokens: {{noteName}} {{notePath}} {{date}}')
-        .addText((t) => t.setValue(s.folder).onChange(async (v) => { s.folder = v; await save(); }));
+        .addText((t) => plainInput(t).setValue(s.folder).onChange(async (v) => { s.folder = v; await save(); }));
     }
 
-    containerEl.createEl('h3', { text: 'Convert images from elsewhere' });
+    new Setting(containerEl).setName('Convert Images from Elsewhere').setHeading();
 
     new Setting(containerEl)
-      .setName('Convert every image that appears in the vault')
+      .setName('Convert Every Image That Appears in the Vault')
       .setDesc('Catches images this plugin did not create — a clipper saving one, another plugin downloading one, a file dropped into the vault in Finder. Uses the bulk format and quality below. This rewrites files in place, so turn it off if you want to convert by hand.')
       .addToggle((t) => t.setValue(s.autoConvert).onChange(async (v) => { s.autoConvert = v; await save(); this.display(); }));
 
@@ -943,59 +966,58 @@ class ArchImagesSettingTab extends PluginSettingTab {
       const here = this.plugin.computer;
       const cur = s.automaticOn || here;
       new Setting(containerEl)
-        .setName('Automatic conversion runs on')
+        .setName('Automatic Conversion Runs On')
         .setDesc('The one computer that converts images arriving in the vault. The vaults are mirrored between computers, so an image saved on one arrives on the other as new; with Obsidian open on both, both would convert it. Paste, drop, the menus and the commands work on every computer. ' + `This computer is ${here}.`)
         .addDropdown((d) => {
-          d.addOption(here, `${here} (this computer)`);
+          d.addOption(here, `${here} (This Computer)`);
           if (cur !== here && cur !== '*') d.addOption(cur, cur);
-          d.addOption('*', 'Every computer');
+          d.addOption('*', 'Every Computer');
           d.setValue(cur).onChange(async (v) => { s.automaticOn = v; await save(); });
         });
       new Setting(containerEl)
-        .setName('Only in these folders')
+        .setName('Only in These Folders')
         .setDesc('Comma-separated. Blank watches the whole vault.')
-        .addText((t) => t.setPlaceholder('whole vault').setValue(s.autoConvertFolders)
+        .addText((t) => plainInput(t).setPlaceholder('whole vault').setValue(s.autoConvertFolders)
           .onChange(async (v) => { s.autoConvertFolders = v; await save(); }));
       new Setting(containerEl)
-        .setName('Wait before converting')
+        .setName('Wait before Converting')
         .setDesc('Milliseconds. A file that has only just appeared may still be being written; converting a half-written download produces garbage.')
-        .addText((t) => t.setValue(String(s.autoConvertDelayMs))
-          .onChange(async (v) => { s.autoConvertDelayMs = Number(v) || 0; await save(); }));
+        .addText((t) => numberInput(t, s.autoConvertDelayMs, async (n) => { s.autoConvertDelayMs = n; await save(); }));
     }
 
     new Setting(containerEl)
-      .setName('Never convert these folders')
+      .setName('Never Convert These Folders')
       .setDesc('Comma-separated, and it applies everywhere — the watcher, the commands, the right-click menu and the whole-vault button. Conversion replaces the original, so put anything you cannot re-download here.')
       .addTextArea((t) => {
-        t.setPlaceholder('Photos/Originals, Scans').setValue(s.excludeFolders)
+        plainInput(t).setPlaceholder('Photos/Originals, Scans').setValue(s.excludeFolders)
           .onChange(async (v) => { s.excludeFolders = v; await save(); });
         t.inputEl.rows = 3;
         t.inputEl.style.width = '100%';
       });
 
     new Setting(containerEl)
-      .setName('Convert these folders losslessly')
+      .setName('Convert These Folders Losslessly')
       .setDesc('Still WebP and still smaller than PNG — a 21 MB PNG lands around 12 MB — but pixel-for-pixel identical to the original. For images you cannot re-download but do not want to leave as huge PNGs. Excluded folders win over this.')
       .addTextArea((t) => {
-        t.setPlaceholder('Photos/Masters').setValue(s.losslessFolders)
+        plainInput(t).setPlaceholder('Photos/Masters').setValue(s.losslessFolders)
           .onChange(async (v) => { s.losslessFolders = v; await save(); });
         t.inputEl.rows = 3;
         t.inputEl.style.width = '100%';
       });
 
-    containerEl.createEl('h3', { text: 'Bulk conversion' });
+    new Setting(containerEl).setName('Bulk Conversion').setHeading();
 
     new Setting(containerEl)
-      .setName('Bulk target format')
+      .setName('Bulk Target Format')
       .addDropdown((d) => d.addOptions({ webp: 'WebP', jpeg: 'JPEG' })
         .setValue(s.bulkFormat).onChange(async (v) => { s.bulkFormat = v; await save(); }));
 
     new Setting(containerEl)
-      .setName('Never convert these extensions')
-      .addText((t) => t.setValue(s.bulkSkipExtensions).onChange(async (v) => { s.bulkSkipExtensions = v; await save(); }));
+      .setName('Never Convert These Extensions')
+      .addText((t) => plainInput(t).setValue(s.bulkSkipExtensions).onChange(async (v) => { s.bulkSkipExtensions = v; await save(); }));
 
     new Setting(containerEl)
-      .setName('Show what will change first')
+      .setName('Show What Will Change First')
       .setDesc('Bulk conversion replaces files in place. Leave this on.')
       .addToggle((t) => t.setValue(s.bulkDryRun).onChange(async (v) => { s.bulkDryRun = v; await save(); }));
 
@@ -1007,17 +1029,17 @@ class ArchImagesSettingTab extends PluginSettingTab {
     const bytes = pending.reduce((n, f) => n + (f.stat ? f.stat.size : 0), 0);
 
     new Setting(containerEl)
-      .setName('Convert now')
+      .setName('Convert Now')
       .setDesc(pending.length
         ? `${pending.length} of ${all.length} images are not ${s.bulkFormat.toUpperCase()} yet — ${kb(bytes)}. Also on the right-click menu of any file or folder.`
         : `All ${all.length} images in the vault are already ${s.bulkFormat.toUpperCase()}.`)
-      .addButton((b) => b.setButtonText(`Whole vault (${pending.length})`).setCta()
+      .addButton((b) => b.setButtonText(`Whole Vault (${pending.length.toLocaleString()})`).setCta()
         .setDisabled(!pending.length)
         .onClick(() => this.plugin.bulkConvert(this.plugin.allImages())))
-      .addButton((b) => b.setButtonText('This note')
+      .addButton((b) => b.setButtonText('This Note')
         .onClick(() => {
           const file = this.app.workspace.getActiveFile();
-          if (!file) return new Notice('No note is open.', 5000);
+          if (!file) return new Notice('No note is open. Open one, then press This Note again.', 5000);
           this.plugin.bulkConvert(this.plugin.imagesLinkedFrom(file));
         }));
 
