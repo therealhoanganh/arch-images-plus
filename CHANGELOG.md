@@ -7,6 +7,16 @@
 
 
 
+## Planned 2026-09-26: an image gallery view for Bases
+
+- **Planned, not built.** Hoang Anh asked for a gallery view to replace Bases Image
+  Gallery in CHAOS, with shuffling built in, grouping by backlink with the groups
+  shuffled too, and no more lag: *"it was even completely shut down the vault, make it
+  unable to open if the image base window was the first to load when I open the vault
+  from external storage."* The plan, the diagnosis of Bases Image Gallery 0.1.6 (every
+  update rebuilds every full-size image, the lightbox loads them all again, grouping is
+  never read) and the order of work are in `Image Gallery Plan.md`.
+
 ## 0.6.0
 
 - **Images arriving in the vault are converted on one computer only, named in the new
