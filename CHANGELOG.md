@@ -7,6 +7,18 @@
 
 
 
+## 0.7.4 (2026-09-26)
+
+- **The lightbox is titled like an open file.** Hoang Anh, after 0.7.3: *"I want title
+  of image to be on top middle like how normal file is. Remove the other details
+  resolution, size, date line. Add note name next to order of image."* The file name
+  sits at the top middle (hover shows its path); the top right reads *note · 3 / 1519*,
+  then *Open note*, *Open image*, close. The size in pixels, size on disk and date are
+  gone, and the image moves back up into the space they took. The bar is three
+  columns with equal outer ones, so the name stays centred on screen whatever the
+  note's name, and a long name is cut with an ellipsis rather than running into the
+  buttons.
+
 ## 0.7.3 (2026-09-26)
 
 - **The lightbox's details go under its buttons.** Hoang Anh, after 0.7.2: *"I want
