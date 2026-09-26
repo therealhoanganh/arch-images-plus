@@ -505,6 +505,15 @@ class ArchImagesPlugin extends Plugin {
     const current = this.app.vault.getAbstractFileByPath(file.path);
     if (!(current instanceof TFile)) return; // moved or deleted while we waited
     const { convertBlob, formatInfo } = this.lib();
+    // With every computer converting (0.7.7), the other one may already have
+    // converted this image and its copy arrived first. Converting again would
+    // save "name 1.webp" and both computers would rewrite the note's link.
+    const folder = current.parent ? current.parent.path : '';
+    const twin = normalizePath((folder ? folder + '/' : '') + current.basename + formatInfo(this.settings.bulkFormat).ext);
+    if (this.app.vault.getAbstractFileByPath(twin) instanceof TFile) {
+      this.log(`left alone, ${twin} is already there (converted on the other computer?): ${current.path}`);
+      return;
+    }
     const raw = await this.app.vault.readBinary(current);
     const before = raw.byteLength;
     if (this.settings.skipSmallerThanKb > 0 && before < this.settings.skipSmallerThanKb * 1024) return;

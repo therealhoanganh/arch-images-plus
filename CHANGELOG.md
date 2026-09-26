@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.8 (2026-09-26)
+
+- **An arriving image whose WebP twin is already there is left alone.** With every
+  computer converting (0.7.7), an image can sync across before the first computer has
+  converted it; the second then found `name.webp` taken, saved `name 1.webp`, and both
+  computers rewrote the note's link, which can leave a Syncthing conflict copy of the
+  note. Asked whether to switch the vaults, Hoang Anh answered *"They all ultimate become
+  .webp right? Why the hussle?"*; this guard is what makes that true. Logged as "left
+  alone, … is already there". Every vault's `automaticOn` was set to `*` the same day
+  (all but CHAOS named the Mac, from the old claim).
+
 ## 0.7.7 (2026-09-26)
 
 - **Automatic conversion runs on every computer by default.** Hoang Anh: *"Also set

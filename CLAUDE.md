@@ -258,8 +258,10 @@ The vaults are mirrored between the Mac and an Ubuntu PC (Syncthing, since 2026-
 the `create` watcher can convert an arriving image on both machines. `automaticOn`
 names the one computer whose watcher runs, or `*` for every computer. **The default is
 `*` since 0.7.7, his choice** (*"set auto-convert on "Every Computer" by default"*); until
-then the first computer to load a vault claimed it, so the vaults set up before 0.7.7 name
-the Mac unless changed. After Clipping keeps the claim; `computerName()` and `automaticRunsHere()` are
+then the first computer to load a vault claimed it. Every vault was set to `*` on
+2026-09-26. **An arriving image whose converted twin (`name.webp`) is already there is left
+alone** (0.7.8): the other computer converted it first, and converting again would save
+`name 1.webp` and fight over the note's link. After Clipping keeps the claim; `computerName()` and `automaticRunsHere()` are
 copied word for word from ARCH After Clipping, whose `CLAUDE.md` has the reasoning. Paste,
 drop, the menus and the commands are started by hand and must stay ungated.
 `onExternalSettingsChange` reloads settings a sync changed on disk.
@@ -270,7 +272,7 @@ current defaults) therefore keeps the defaults of the day it claimed: CHAOS and 
 which were open on 2026-09-25. The other vaults were given a `data.json` holding only
 `automaticOn`, so they still follow new defaults.
 
-## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.7 the same day)
+## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 to 0.7.8 the same day)
 
 `lib/gallery.js` registers **ARCH Image Gallery** (`arch-image-gallery`), built on
 2026-09-26 to replace Bases Image Gallery 0.1.6 in CHAOS, which froze the vault. His
