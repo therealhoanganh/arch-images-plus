@@ -267,7 +267,7 @@ current defaults) therefore keeps the defaults of the day it claimed: CHAOS and 
 which were open on 2026-09-25. The other vaults were given a `data.json` holding only
 `automaticOn`, so they still follow new defaults.
 
-## The gallery view for Bases (0.7.0, not released yet)
+## The gallery view for Bases (0.7.0, released 2026-09-26; 0.7.1 the same day)
 
 `lib/gallery.js` registers **ARCH Image gallery** (`arch-image-gallery`), built on
 2026-09-26 to replace Bases Image Gallery 0.1.6 in CHAOS, which froze the vault. His
@@ -288,6 +288,13 @@ read it before changing the view. The rules that keep it fast:
   `Platform.resourcePathPrefix`. GIFs are always shown as they are, for the animation.
 - **Group keys that are lists are split** into one group per item (backlinks: one
   group per linking note), a toggle in the view options.
+- **Groups under headings or kept together** (`groupDisplay`, 0.7.1): *together*
+  puts every group's cards in one grid with no headings, so Group by acts as the
+  sort by backlink that Bases lacks; each image shows once there.
+- **Vertical masonry is laid out in code**, not CSS columns: `fillGrid` deals cards
+  left to right into the shortest column by cached aspect, so order reads across the
+  page. A size learned only after the card loads does not move it; the columns can
+  end a little uneven.
 - **The shuffle is the view's own**: ranks held per view instance, so an update never
   reorders; the Shuffle button or reopening makes new ones.
 - `plugin.galleryDraws` holds the last 20 draws (time after load, ms, counts), for

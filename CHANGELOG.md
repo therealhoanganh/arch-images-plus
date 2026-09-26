@@ -7,6 +7,30 @@
 
 
 
+## 0.7.1 (2026-09-26)
+
+- **Groups kept together, without headings.** Hoang Anh, after using grouping by
+  backlink in CHAOS: *"So group by backlink is not very good because it has too much
+  blank gap. My idea to fix it is not explictly group by backlink but sort based on
+  backlink and randomize that sort each time because backlink idea works. But the
+  problem is there is not sort by backlink option and we need to randomize smartly
+  like based on the group, not individual."* Bases' Sort cannot sort by backlink, but
+  its Group by can group by it, so the new view option **Groups** (`groupDisplay`)
+  offers *Each under its own heading* (`headings`, the default, as before) or *Kept
+  together in one grid* (`together`): the groups only decide which images sit next
+  to each other, Group order still shuffles them as whole groups, and Image order
+  shuffles inside each. An image linked from two notes shows once, with its first
+  group. `Lewds/H-games/@IMAGES.base` in CHAOS uses it.
+- **Vertical masonry reads left to right.** It was CSS columns, which fill the first
+  column top to bottom before the second, so in one grid a group would run down one
+  column and the four columns would show four distant parts of the order. The cards
+  are now dealt out left to right, each to the column that is shortest so far (heights
+  from the cached image sizes), so a group's images sit side by side across the page.
+  This also means the lightbox's next image is the one to the right, and a small
+  group under a heading no longer leaves its images stacked in one column.
+  Tried in TESTFIELD on the 1,519 H-games images: 119 games in one grid, about 490 ms
+  for the first draw; the headed view still draws in about 370 ms.
+
 ## 0.7.0 (2026-09-26)
 
 - **Released the same day, without the cold-start test from the drive.** Hoang Anh

@@ -154,9 +154,13 @@ and are left alone.
 - **Delete when done:** `TESTFIELD/_/Gallery Test/` (hard links to CHAOS's H-games
   images, 118 stub notes, two test bases; it syncs to the Mac as 444 MB) and
   `4T-HDD/_Gallery Test/`.
-- Known and left as it is: vertical masonry uses CSS columns, so the lightbox's next
-  image is the one below, not to the right, and a small group leaves gaps under its
-  shorter columns. Bases Image Gallery behaves the same.
+- **0.7.1, the same day: groups kept together.** Headed groups left too much blank
+  space, in his words, so the option **Groups: Kept together in one grid** puts every
+  group's images in one grid with no headings, still shuffled as whole groups
+  (`CHANGELOG.md` has his words). Vertical masonry now deals cards left to right into
+  the shortest column instead of using CSS columns, so the lightbox's next image is the
+  one to the right. `Lewds/H-games/@IMAGES.base` got its Group by backlink back, with
+  `groupDisplay: together`.
 
 ## Still open
 
