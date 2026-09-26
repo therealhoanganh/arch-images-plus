@@ -7,6 +7,25 @@
 
 
 
+## 0.7.0 — not released yet (2026-09-26)
+
+- **ARCH Image gallery, a view for Bases**, to replace Bases Image Gallery in CHAOS.
+  Hoang Anh asked for shuffling built in, grouping by backlink with the groups
+  shuffled too, and an end to the lag: *"it was even completely shut down the vault,
+  make it unable to open if the image base window was the first to load when I open
+  the vault from external storage."* Built as planned in `Image Gallery Plan.md`: Bases'
+  own groups, list keys split per link; Image order and Group order each shuffled or as
+  the base sorts; a Shuffle button; lazy loading; thumbnails cached outside the vault;
+  no work on updates that change nothing; the first draw waits for the vault to open;
+  a lightbox that loads one image and its neighbours; no 500-image cap. Written fresh,
+  because the old plugin's lightbox (lightGallery) is GPLv3.
+- **The first draw waited a fixed 3 s** on every open with a public `'resolved'`
+  listener (draw at 9.2 s after a reload); `metadataCache.onCleanCache` brought it to
+  6.0 s.
+- **Reloading `lib/` also clears `window.require.cache`**, the fix ARCH Recreations
+  found; the old code walked only the wrapper's cache.
+- Command *Clear the gallery thumbnail cache*.
+
 ## Planned 2026-09-26: an image gallery view for Bases
 
 - **Planned, not built.** Hoang Anh asked for a gallery view to replace Bases Image

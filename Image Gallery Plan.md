@@ -123,8 +123,30 @@ and are left alone.
 3. The lightbox.
 4. Release as 0.7.0 and switch the CHAOS bases over.
 
+## Where it stands (2026-09-26, end of session)
+
+- Steps 1 to 3 are built (view, thumbnail cache, lightbox) and work in TESTFIELD on
+  the 1,519 H-games images: grouping by game (119 groups, as the Table view shows),
+  shuffle, horizontal layout, the lightbox, one 330 ms draw after a reload.
+- **Test copy on the drive:** `4T-HDD/_Gallery Test/CHAOS Gallery Test` is today's
+  CHAOS without video, music and `.git` (2,397 images), with the development build
+  installed, `@IMAGES ARCH.base` (the same views, new type) beside `@IMAGES.base`,
+  and the files evicted from the page cache. He opened it on the old gallery:
+  *"Yes, it works so far!"* **Still to do there:** open `@IMAGES ARCH.base` as the
+  first tab from a cold cache and compare (`obsidian vault="CHAOS Gallery Test" …`;
+  the eviction script is `os.posix_fadvise(..., POSIX_FADV_DONTNEED)` over every file).
+- **Next:** step 4. Build on the Mac (`npm run build`; the PC has no Node), release
+  0.7.0, change `type:` in CHAOS's `@IMAGES.base` and `Lewds/H-games/@IMAGES.base`
+  and drop their `formula.Random` sort. Bases Image Gallery stays installed for him to
+  compare and remove.
+- **Delete when done:** `TESTFIELD/_/Gallery Test/` (hard links to CHAOS's H-games
+  images, 118 stub notes, two test bases; it syncs to the Mac as 444 MB) and
+  `4T-HDD/_Gallery Test/`.
+- Known and left as it is: vertical masonry uses CSS columns, so the lightbox's next
+  image is the one below, not to the right, and a small group leaves gaps under its
+  shorter columns. Bases Image Gallery behaves the same.
+
 ## Still open
 
-- *"when I open the vault from external storage"*: which drive, and on which
-  computer? CHAOS on the PC is on the internal disk. The fix does not depend on the
-  answer, but testing it the way it failed does.
+- *"when I open the vault from external storage"*: he offered to open the CHAOS
+  backup on 4T-HDD; the test copy above stands in for it.

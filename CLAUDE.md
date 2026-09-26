@@ -218,10 +218,10 @@ matches the plugin folder **and its realpath**, because during development that
 folder is a symlink into the repo and `require` resolves symlinks, so the cached
 keys live under the repo path rather than under `.obsidian`.
 
-**It walks `require.cache`, and that may be the wrong cache.** ARCH Recreations
-found that the `require` a plugin is handed is Obsidian's wrapper, whose `.cache` is
-not Node's, and walks `window.require.cache` instead. Not tested here; open work in
-`../CLAUDE.md`.
+**It walks `window.require.cache` as well as `require.cache`** (since 2026-09-26).
+ARCH Recreations found that the `require` a plugin is handed is Obsidian's wrapper,
+whose `.cache` is not Node's. Not yet confirmed here by editing `lib/` and running
+`plugin:reload`; a full `reload` of the vault always picks the edit up.
 
 Changes to `main.js` were never affected — Obsidian re-evaluates that itself.
 That asymmetry is what made this confusing: some edits took, others did not.
@@ -266,6 +266,36 @@ tab. A vault that had no `data.json` (every vault until 0.6.0, so all of them fo
 current defaults) therefore keeps the defaults of the day it claimed: CHAOS and THOUGHTS,
 which were open on 2026-09-25. The other vaults were given a `data.json` holding only
 `automaticOn`, so they still follow new defaults.
+
+## The gallery view for Bases (0.7.0, not released yet)
+
+`lib/gallery.js` registers **ARCH Image gallery** (`arch-image-gallery`), built on
+2026-09-26 to replace Bases Image Gallery 0.1.6 in CHAOS, which froze the vault. His
+request, the diagnosis of the old plugin and the plan are in `Image Gallery Plan.md`;
+read it before changing the view. The rules that keep it fast:
+
+- **The first draw waits for `plugin.galleryReady`**: layout ready, then
+  `metadataCache.onCleanCache` (internal, what Obsidian itself uses; a public
+  `'resolved'` listener cost a fixed 3 s because it had usually already fired).
+- **An update that changes nothing visible does nothing.** `render()` compares a
+  signature of groups, paths and mtimes. Cards are kept in a map and moved, never
+  rebuilt, so a loaded image is not loaded again.
+- **Images load only near the screen** (two IntersectionObservers against the
+  scrolling `.bases-view`, load at 1,200 px, let go at 5,000 px).
+- **Thumbnails** (`lib/thumbs.js`) for images of 300 KB and over, at 320/640/1024 px,
+  in `~/.cache/arch-images-plus/<vault hash>/` on Linux (`~/Library/Caches/…` on the
+  Mac), outside the vault so Syncthing and the backup leave them alone. Shown through
+  `Platform.resourcePathPrefix`. GIFs are always shown as they are, for the animation.
+- **Group keys that are lists are split** into one group per item (backlinks: one
+  group per linking note), a toggle in the view options.
+- **The shuffle is the view's own**: ranks held per view instance, so an update never
+  reorders; the Shuffle button or reopening makes new ones.
+- `plugin.galleryDraws` holds the last 20 draws (time after load, ms, counts), for
+  checking from the console or `obsidian eval`.
+
+Measured 2026-09-26 in TESTFIELD, 1,519 H-games images: one draw of about 330 ms after
+a vault reload, about 40 images holding a picture at any time while scrolling all of
+them, slowest frame 120 ms.
 
 ## Coupling to the other ARCH plugins
 
