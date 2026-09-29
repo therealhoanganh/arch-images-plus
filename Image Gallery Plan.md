@@ -177,3 +177,15 @@ and are left alone.
 
 - *"when I open the vault from external storage"*: he offered to open the CHAOS
   backup on 4T-HDD; the test copy above stands in for it.
+
+## Planned: groups he orders by hand (his words, 2026-09-29)
+
+For the H-games gallery in CHAOS. He will put games into groups himself through a
+text property, rather than a tag the plugin assigns, because a rare, highly rated
+game is not always a hidden gem: *"few of these games are not really "hidden-game",
+they are just weird and unique, which is little different than Hidden Gem, like Her
+Last Piece is ligit Hidden Gem."* Then the gallery view: *"I want to sort by group
+and be able to sort them, place Hidden Gem at second, below My Favorites."* So the
+view needs a group order he sets by hand (My Favorites first, Hidden Gem second),
+and inside each group the base's own sort, which for H-games is `weighted-rating`
+(ARCH Adult Contents 0.3.0). The property's name is not decided yet. Not started.
