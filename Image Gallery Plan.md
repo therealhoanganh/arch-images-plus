@@ -162,10 +162,11 @@ and are left alone.
   groups off screen; small and safe), then drawing only the groups near the screen,
   with the rest added as they scroll close, sized from the cached image sizes so the
   scroll bar stays right. Measure `plugin.galleryDraws` before and after, in the
-  CHAOS base. The lag when the `Images` folder is opened in the file explorer is
-  Obsidian's own (3,933 files in one folder) and this plugin cannot change it; the
-  ways round it are keeping the folder collapsed, or one folder per game, which
-  touches Adult Contents, the bases and the cover tool.
+  CHAOS base. The lag when the `Images` folder is opened in the file explorer was
+  first put down to Obsidian; timed afterwards, it is the Iconic plugin: 4.0 s to expand
+  the folder, 0.57 s with Iconic off, the theme and CSS snippets making no difference,
+  and Obsidian drawing only the 39 rows on screen. Iconic's own bug reports #227 and
+  #146 describe it.
   **Timed the same evening, his report:** the vault's `@IMAGES.base` took about 10
   seconds to open, and the log read *"drew 2468 images in 933 groups (2468 cards) in
   5286 ms"*. Timed inside his Obsidian (read only): `getBacklinksForFile` costs 8.3 ms

@@ -35,8 +35,9 @@ Measured in CHAOS on the PC, opening a base in a new tab, before and after:
 
 Checked the same way: Shuffle after scrolling 24,000 px keeps the 950 cards shown; the
 lightbox opens, End reaches the last image (not yet on the page) and Escape closes it.
-The lag of the `Images` folder in Obsidian's file explorer (3,933 files in one folder)
-is Obsidian's own and not touched.
+The lag of the `Images` folder in Obsidian's file explorer was first put down to Obsidian;
+timed afterwards, it is the Iconic plugin (4.0 s to expand the folder, 0.57 s with Iconic
+off; Obsidian draws only the 39 rows on screen). Not this plugin's to fix.
 
 ## 0.8.0 (2026-10-01)
 
