@@ -35,7 +35,8 @@ on which loads first. One handler, one pipeline, no race.
 - Vertical or horizontal masonry, with columns, row height, gutter and corner radius
 - Images shuffled each time the base opens, or in the base's own order, with a
   Shuffle button
-- Uses the base's Group by, including backlinks: each group under its own heading,
+- Groups by the notes that link to each image, worked out once for the whole vault
+  (fast), or uses the base's own Group by; each group under its own heading,
   or kept together in one grid with no headings, the groups shuffled as wholes
 - Fast on thousands of images: images load only near the screen, thumbnails are
   cached outside the vault, and the first draw waits for the vault to finish opening

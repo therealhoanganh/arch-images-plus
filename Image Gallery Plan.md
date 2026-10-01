@@ -142,6 +142,7 @@ and are left alone.
   Mac, the plugin load and work well.."*
 - **Still to do:** he compares the two galleries on the Mac and removes Bases Image
   Gallery.
+- **Done in 0.9.0, the same night** (the numbers are in `CHANGELOG.md`): grouping by linking note in the gallery, cards added as the view scrolls. Opening either CHAOS image base now takes about 0.2 s, from 6.4 s and 4.6 s. The history of the request follows.
 - **Planned: load only what is on screen** (his request, 2026-10-01). On the PC the
   H-games gallery now holds about 2,500 images and takes several seconds to load,
   and he suspects it in an Obsidian freeze that day (opening ARCH Adult Contents'

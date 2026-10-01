@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.9.0 (2026-10-01)
+
+His report: *"when I open image folder or Image Gallery in base, it lagged a little
+because of the huge loading"*, then *"I open @IMAGES at root and it tooks 10 seconds"*,
+with the log line *"drew 2468 images in 933 groups (2468 cards) in 5286 ms"*.
+
+- **The gallery groups by linking note itself.** Both CHAOS image bases were grouped by
+  `file.backlinks`, and Bases works that out by scanning every link in the vault once
+  per image: 8.3 ms an image in CHAOS (1,778 notes, 9,886 links), timed with `obsidian
+  eval`. New option *Group By*: *The Base's Own Group By* (as before) or *The Notes That
+  Link to Each Image (Fast)*, which reads `metadataCache.resolvedLinks` once
+  (`linkingNotes`, `bucketByLinks`) and redraws when links change (the `resolved`
+  event, gathered over a second). The base then drops its `groupBy`. Both CHAOS bases
+  were switched (`groupSource: links`).
+- **A view's first data is drawn at once**, not after the 300 ms gathering meant for the
+  bursts that follow it.
+- **Cards go on the page as the view scrolls toward them**: 150 at first, 200 more
+  whenever the end of the page comes within 2,500 px, watched by a sentinel. Laid out
+  at once, the H-games base's 3,931 cards held the window for 1 to 1.3 s; added a batch
+  a frame instead, each frame grew slower with the page. A later draw puts back at
+  least as many cards as were there, so the page does not shrink under someone
+  scrolled down it.
+- **A card is watched for coming near the screen only once it is on the page**:
+  watching all of them from the start made every scroll frame slower (15 frames of 0.1
+  to 0.3 s over a test scroll, then 3 of 0.1 to 0.15 s).
+
+Measured in CHAOS on the PC, opening a base in a new tab, before and after:
+
+| base | images | before: draw / open | after: draw / open | long frames after |
+|---|---|---|---|---|
+| `@IMAGES.base` (root) | 2,468 in 933 groups | 5,355 ms / 6.4 s | 34 to 66 ms / about 0.2 s | none |
+| `Lewds/H-games/@IMAGES.base` | 3,931 in 267 groups | 2,663 ms / 4.6 s | 49 to 69 ms / about 0.2 s | at most one, 0.13 s |
+
+Checked the same way: Shuffle after scrolling 24,000 px keeps the 950 cards shown; the
+lightbox opens, End reaches the last image (not yet on the page) and Escape closes it.
+The lag of the `Images` folder in Obsidian's file explorer (3,933 files in one folder)
+is Obsidian's own and not touched.
+
 ## 0.8.0 (2026-10-01)
 
 Three requests from Hoang Anh, in his words:

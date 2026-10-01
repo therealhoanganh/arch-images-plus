@@ -335,6 +335,17 @@ read it before changing the view. The rules that keep it fast:
 - `plugin.galleryDraws` holds the last 20 draws (time after load, ms, counts), for
   checking from the console or `obsidian eval`.
 
+**Never group a big gallery by `file.backlinks` in the base** (0.9.0): Bases scans every
+link in the vault once per image, 8.3 ms an image in CHAOS, so 2,468 images took about
+20 seconds of lookups. Set the view's *Group By* to the linking notes (`groupSource:
+links`) and drop the base's `groupBy`; the gallery inverts `resolvedLinks` once. Cards go
+on the page as the view scrolls toward them (`fill`, `moreIfNear`, a sentinel watched by
+`moreObserver`), and a card is watched by the load observers only once it is on the page
+(`watch`); both came from timing CHAOS's 3,931-image base, and the numbers are in
+`CHANGELOG.md`. To time a base from the terminal, open it in a new leaf with `obsidian
+eval`, wait for `plugin.galleryDraws` to grow, record frames over 100 ms with
+`requestAnimationFrame`, then detach the leaf.
+
 Measured 2026-09-26 in TESTFIELD, 1,519 H-games images: one draw of about 330 ms after
 a vault reload, about 40 images holding a picture at any time while scrolling all of
 them, slowest frame 120 ms.
