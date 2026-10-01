@@ -142,6 +142,14 @@ and are left alone.
   Mac, the plugin load and work well.."*
 - **Still to do:** he compares the two galleries on the Mac and removes Bases Image
   Gallery.
+- **Planned: load only what is on screen** (his request, 2026-10-01). On the PC the
+  H-games gallery now holds about 2,500 images and takes several seconds to load,
+  and he suspects it in an Obsidian freeze that day (opening ARCH Adult Contents'
+  settings froze the PC's Obsidian, one renderer at 100% CPU; the plugin's only suspect
+  was removed in its 0.5.2 and the freeze stopped, so the cause is not confirmed). His
+  words: *"I could be because of Image Gallery from Arch Image Plus, we will need to
+  optimize this later, like to not loads everthing which is 2500 images and tooks
+  several seonds to load."* Not started.
 - **Test copy on the drive:** `4T-HDD/_Gallery Test/CHAOS Gallery Test` is today's
   CHAOS without video, music and `.git` (2,397 images), with the development build
   installed, `@IMAGES ARCH.base` (the same views, new type) beside `@IMAGES.base`,
