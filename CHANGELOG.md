@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1 (2026-10-02)
+
+A colon in an image name becomes " - " (or "-" inside a word); it was dropped before. His rule for every ARCH plugin: *"Fix it, we need will need to find what games got ":" replace with blank space too, this need to be a universal rule too too!"* An image is named from its note, whose name cannot hold a colon, so in practice this reaches only a template field that can (Recreations 0.4.4 has the whole account).
+
 ## 0.9.0 (2026-10-01)
 
 His report: *"when I open image folder or Image Gallery in base, it lagged a little
