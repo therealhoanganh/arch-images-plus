@@ -14,7 +14,9 @@ on which loads first. One handler, one pipeline, no race.
 **On paste and drop**
 - Converts to WebP, JPEG or PNG at a quality you choose
 - Optionally resizes to a maximum long edge, never enlarging
-- Names the file from a template — `{{noteName}} {{date}}-{{counter}}` by default
+- Names the file from a template — `{{noteName}} {{counter}}` by default, so a
+  note's images are `Note 01`, `Note 02`; the counter carries on from the highest
+  number already in the vault for that name
 - Saves it where Obsidian would, or in a folder of your choosing
 - Asks you to confirm the name first (on by default; turn it off for silent
   pasting)
@@ -25,6 +27,9 @@ on which loads first. One handler, one pipeline, no race.
 - Shows exactly what will change before it does anything
 - Links are rewritten by Obsidian itself, so embeds, aliases, frontmatter and
   canvas references all follow
+- *Rename Images in the Active Note by Their Order* numbers a note's images in the
+  order they appear, after a preview; images other notes use are left alone unless
+  you say otherwise
 
 **A gallery view for Bases** (*ARCH Image Gallery*)
 - Vertical or horizontal masonry, with columns, row height, gutter and corner radius

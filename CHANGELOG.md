@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.8.0 (2026-10-01)
+
+Three requests from Hoang Anh, in his words:
+
+- **The default name is `{{noteName}} {{counter}}`** (*"Make name template
+  {{noteName}} {{counter}} as default."*), so a note's images are `Note 01`, `Note 02`.
+  It was `{{noteName}} {{date}}-{{counter}}`. A vault whose `data.json` holds the old
+  default word for word follows the new one on load: THOUGHTS and TESTFIELD had it
+  saved by the 0.6.0 claim, not chosen. CHAOS already had `{{noteName}} {{counter}}`,
+  set by hand.
+- **`{{counter}}` counts per name, from the images already in the vault.** His report:
+  *"{{noteName}} {{counter}} doesn't count flexibly based on image name but based on
+  current session! Like it will keep count up number even though I paste in different
+  note. Like A1 A2 then move to be it will be B3 even thought note B doesn't have any
+  images yet."* The counter was one number for the whole session. Now the template is
+  turned into a pattern with the counter as `(\d+)` (`counterPattern` in
+  `lib/naming.js`), every image in the vault is matched against it, in every folder and
+  ignoring case, and the next number is one past the highest. A gap left by a deleted
+  image is not filled, so a later image never sorts before an earlier one.
+- **New command: *Rename Images in the Active Note by Their Order*** (*"Add function in
+  command pallate of renaming images based on order of them in note"*). It numbers the
+  images the note shows or links to, in the order they appear, with the name template
+  (a template without `{{counter}}` gets one appended), each staying in its folder. A
+  preview lists every change first. Renames go through `fileManager.renameFile`, so links
+  follow, in two steps so that names can swap (`A 02` → `A 01` while `A 01` → `A 03`).
+  An image another note also links to is left alone unless *Rename Images Other Notes
+  Use Too* is switched on in the preview, since taking this note's name would pull it out
+  of the other note's numbering. A new name already used by a file outside the note is
+  reported and that image left alone, because the next free name would break the order.
+  SVGs are numbered too. Tested in TESTFIELD on the PC: a swap, a skipped shared image, a
+  taken name, and a plain link following its embed.
+
 ## 0.7.8 (2026-09-26)
 
 - **An arriving image whose WebP twin is already there is left alone.** With every

@@ -56,7 +56,9 @@ const DEFAULT_SETTINGS = {
   skipSmallerThanKb: 0,      // leave tiny images alone entirely
 
   // --- naming ---
-  nameTemplate: '{{noteName}} {{date}}-{{counter}}',
+  // {{counter}} counts per name since 0.8.0 (the next number after the highest
+  // already in the vault), so this numbers each note's images 01, 02, 03.
+  nameTemplate: '{{noteName}} {{counter}}',
   askOnPaste: true,          // show the rename prompt before saving
 
   // --- where the file lands ---
@@ -96,11 +98,12 @@ const DEFAULT_SETTINGS = {
 };
 
 const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'avif', 'bmp', 'gif', 'tif', 'tiff', 'heic', 'heif'];
+// Renaming by order takes SVG too: it is never converted, but it is numbered.
+const RENAMABLE_EXTS = [...IMAGE_EXTS, 'svg'];
 
 class ArchImagesPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
-    this.batchCounter = 0;
     this.queue = Promise.resolve();
     // Paths this plugin wrote itself, so the create-watcher can ignore them.
     this.justWrote = new Set();
@@ -130,6 +133,17 @@ class ArchImagesPlugin extends Plugin {
         const file = this.app.workspace.getActiveFile();
         if (!file) return false;
         if (!checking) this.bulkConvert(this.imagesLinkedFrom(file));
+        return true;
+      },
+    });
+
+    this.addCommand({
+      id: 'rename-images-by-order',
+      name: 'Rename Images in the Active Note by Their Order',
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== 'md') return false;
+        if (!checking) this.renameByOrder(file);
         return true;
       },
     });
@@ -337,7 +351,7 @@ class ArchImagesPlugin extends Plugin {
     for (let i = 0; i < files.length; i++) {
       let saved = null;
       if (!failure) {
-        try { saved = await this.saveOne(files[i], note, i); } catch (e) { failure = e; }
+        try { saved = await this.saveOne(files[i], note); } catch (e) { failure = e; }
       }
       // Every placeholder is resolved, including those after a failure, so a
       // thrown save never leaves "[Saving image …]" text behind in the note.
@@ -346,7 +360,7 @@ class ArchImagesPlugin extends Plugin {
     if (failure) throw failure;
   }
 
-  async saveOne(file, note, indexInBatch) {
+  async saveOne(file, note) {
     const { convertBlob, formatInfo, buildStem } = this.lib();
     const tooSmall = this.settings.skipSmallerThanKb > 0 && file.size < this.settings.skipSmallerThanKb * 1024;
 
@@ -384,14 +398,15 @@ class ArchImagesPlugin extends Plugin {
       }
     }
 
-    let stem = buildStem({
+    const vars = {
       template: this.settings.nameTemplate,
       noteName: note ? note.basename : '',
       originalName: file.name,
       width: result && result.width,
       height: result && result.height,
-      counter: this.nextCounter(indexInBatch),
-    });
+      now: new Date(),
+    };
+    let stem = buildStem({ ...vars, counter: this.nextCounter(vars) });
 
     if (this.settings.askOnPaste) {
       const answer = await this.promptForName(stem);
@@ -424,11 +439,17 @@ class ArchImagesPlugin extends Plugin {
     return this.resolveFolder(note);
   }
 
-  nextCounter(indexInBatch) {
-    // Restarts each minute-scale batch rather than growing forever; uniqueness
-    // is guaranteed by uniquePath, not by this number.
-    this.batchCounter = (this.batchCounter || 0) + 1;
-    return this.batchCounter;
+  // The next number for this name, read off the images already in the vault
+  // (0.8.0), so each note counts on its own: B's first image is B 01 even
+  // after A 01 and A 02 were pasted. Every folder is searched, since two
+  // images of one name in different folders make a wikilink ambiguous. Saves
+  // run one at a time through the queue, so an image pasted with others sees
+  // the ones before it already on disk.
+  nextCounter(vars) {
+    const { counterPattern, nextCounterFrom } = this.lib();
+    const pattern = counterPattern(vars);
+    if (!pattern) return null;
+    return nextCounterFrom(this.allImages().map((f) => f.basename), pattern);
   }
 
   extFor(file) {
@@ -667,6 +688,120 @@ class ArchImagesPlugin extends Plugin {
     await this.app.vault.modifyBinary(moved instanceof TFile ? moved : file, bytes);
   }
 
+  /* ---------------- renaming a note's images by their order (0.8.0) ---------------- */
+
+  // The images a note shows or links to, in the order they appear in it, each
+  // once. Remote images and links to notes resolve to nothing and drop out.
+  imagesInOrder(note) {
+    const cache = this.app.metadataCache.getFileCache(note) || {};
+    const refs = [...(cache.embeds || []), ...(cache.links || [])]
+      .sort((a, b) => a.position.start.offset - b.position.start.offset);
+    const seen = new Set();
+    const out = [];
+    for (const ref of refs) {
+      const f = this.app.metadataCache.getFirstLinkpathDest(String(ref.link).split('#')[0], note.path);
+      if (!(f instanceof TFile) || !RENAMABLE_EXTS.includes(f.extension.toLowerCase()) || seen.has(f.path)) continue;
+      seen.add(f.path);
+      out.push(f);
+    }
+    return out;
+  }
+
+  // Which other notes link to each of these images. An image two notes share
+  // is left alone by default: renaming it after one note takes it out of the
+  // other's numbering.
+  otherNotesUsing(images, note) {
+    const wanted = new Set(images.map((f) => f.path));
+    const users = new Map();
+    const resolved = this.app.metadataCache.resolvedLinks;
+    for (const source of Object.keys(resolved)) {
+      if (source === note.path) continue;
+      for (const target of Object.keys(resolved[source])) {
+        if (!wanted.has(target)) continue;
+        if (!users.has(target)) users.set(target, []);
+        users.get(target).push(source);
+      }
+    }
+    return users;
+  }
+
+  // What each image would become. Images are numbered 1, 2, 3 in the order of
+  // the note, counting only those that will carry the note's name, and each
+  // stays in its own folder. A name already taken by a file outside this set
+  // is reported and that image left alone: taking the next free name would
+  // break the numbering, which is the point of the command.
+  async planRenameByOrder(note, images, users, includeShared) {
+    const { buildStem, hasCounter } = this.lib();
+    let template = this.settings.nameTemplate;
+    if (!hasCounter(template)) template += ' {{counter}}';
+    const rows = [];
+    let n = 0;
+    for (const file of images) {
+      const shared = users.get(file.path) || [];
+      if (shared.length && !includeShared) { rows.push({ file, skip: 'shared', shared }); continue; }
+      n++;
+      const stem = buildStem({ template, noteName: note.basename, originalName: file.name, counter: n, now: new Date(file.stat.ctime) });
+      const folder = file.parent ? file.parent.path : '';
+      const target = normalizePath((folder ? folder + '/' : '') + stem + '.' + file.extension);
+      rows.push({ file, target, shared, same: target === file.path });
+    }
+    // The Mac's disk ignores case, so occupancy is compared in lower case.
+    const moving = new Set(rows.filter((r) => r.target).map((r) => r.file.path.toLowerCase()));
+    for (const r of rows) {
+      if (!r.target || r.same || moving.has(r.target.toLowerCase())) continue;
+      if (await this.app.vault.adapter.exists(r.target)) r.skip = 'taken';
+    }
+    return rows;
+  }
+
+  async renameByOrder(note) {
+    const images = this.imagesInOrder(note);
+    if (!images.length) return new Notice(`No images in ${note.basename}.`, 4000);
+    const users = this.otherNotesUsing(images, note);
+    new RenameByOrderModal(this.app, this, note,
+      (includeShared) => this.planRenameByOrder(note, images, users, includeShared),
+      (rows) => this.enqueue(() => this.runRenameByOrder(note, rows))).open();
+  }
+
+  // Through fileManager.renameFile, so Obsidian rewrites every link, as in
+  // replaceInPlace. Two steps: an image sitting on a name another image needs
+  // (A 02 that becomes A 01 while A 01 becomes A 02) first moves to a
+  // temporary name, then every image takes its new name.
+  async runRenameByOrder(note, rows) {
+    const moves = rows.filter((r) => r.target && !r.skip && !r.same);
+    this.log(`renaming ${moves.length} images in ${note.path} by their order`);
+    for (const r of rows) {
+      if (r.skip === 'shared') this.log(`  left alone, also used in ${r.shared.join(', ')}: ${r.file.path}`);
+      else if (r.skip === 'taken') this.log(`  left alone, ${r.target} is another file: ${r.file.path}`);
+      else if (r.same) this.log(`  already named: ${r.file.path}`);
+    }
+    const targets = new Set(moves.map((r) => r.target.toLowerCase()));
+    let done = 0, failed = 0;
+    for (const r of moves) {
+      if (!targets.has(r.file.path.toLowerCase())) continue;
+      const folder = r.file.parent ? r.file.parent.path : '';
+      const tmp = await this.uniquePath(folder, `${r.file.basename} arch-renaming.${r.file.extension}`);
+      try { await this.app.fileManager.renameFile(r.file, tmp); }
+      catch (e) { r.failed = true; failed++; console.error('[arch-images]', r.file.path, e); }
+    }
+    for (const r of moves) {
+      if (r.failed) continue;
+      const from = r.file.path;
+      try {
+        await this.app.fileManager.renameFile(r.file, r.target);   // the TFile follows the rename
+        this.log(`  ${from} → ${r.target}`);
+        done++;
+      } catch (e) {
+        failed++;
+        console.error('[arch-images]', from, '→', r.target, e);
+      }
+    }
+    const left = rows.length - moves.length;
+    this.log(`done: ${done} renamed, ${left} left as they were, ${failed} failed`);
+    new Notice(`Renamed ${done} image${done === 1 ? '' : 's'} in ${note.basename}.` +
+      (failed ? ` ${failed} failed; the error is in the developer console.` : ''), 6000);
+  }
+
   /* ---------------- paths and links ---------------- */
 
   // Blank/'obsidian' means "wherever Obsidian puts attachments", which respects
@@ -759,6 +894,9 @@ class ArchImagesPlugin extends Plugin {
     // showed a format that is no longer in the dropdown.
     if (this.settings.format === 'avif') this.settings.format = 'webp';
     if (this.settings.bulkFormat === 'avif') this.settings.bulkFormat = 'webp';
+    // The old default, saved word for word, was saved by the 0.6.0 claim
+    // (THOUGHTS, TESTFIELD), not chosen, so it follows the new default.
+    if (saved.nameTemplate === '{{noteName}} {{date}}-{{counter}}') this.settings.nameTemplate = DEFAULT_SETTINGS.nameTemplate;
     delete this.settings.ffmpegPath;
     if (!this.computer) this.computer = computerName();
   }
@@ -874,6 +1012,54 @@ class BulkPreviewModal extends Modal {
   }
 }
 
+// The preview for renaming a note's images by their order. Always shown: the
+// command renames files other notes may link to, and the list is the only
+// place to see what will happen before it does.
+class RenameByOrderModal extends Modal {
+  constructor(app, plugin, note, plan, onConfirm) {
+    super(app);
+    this.plugin = plugin;
+    this.note = note;
+    this.plan = plan;
+    this.onConfirm = onConfirm;
+    this.includeShared = false;
+  }
+  async onOpen() {
+    this.titleEl.setText(`Rename the Images in ${this.note.basename}`);
+    await this.draw();
+  }
+  async draw() {
+    const rows = await this.plan(this.includeShared);
+    const el = this.contentEl;
+    el.empty();
+    const moves = rows.filter((r) => r.target && !r.skip && !r.same);
+    const shared = rows.filter((r) => r.shared && r.shared.length).length;
+    el.createEl('p', { text: 'Numbered in the order they appear in the note. Obsidian updates every link to them.' });
+    if (shared) {
+      new Setting(el)
+        .setName('Rename Images Other Notes Use Too')
+        .setDesc(`${shared} of these images ${shared === 1 ? 'is' : 'are'} also linked from another note, and would take this note's name.`)
+        .addToggle((t) => t.setValue(this.includeShared).onChange(async (v) => { this.includeShared = v; await this.draw(); }));
+    }
+    const list = el.createEl('ul');
+    list.style.maxHeight = '300px';
+    list.style.overflow = 'auto';
+    for (const r of rows) {
+      let text;
+      if (r.skip === 'shared') text = `${r.file.name}: left alone, also used in ${r.shared.map((p) => p.replace(/\.md$/, '')).join(', ')}`;
+      else if (r.skip === 'taken') text = `${r.file.name}: left alone, ${r.target.split('/').pop()} is already another file`;
+      else if (r.same) text = `${r.file.name}: already named`;
+      else text = `${r.file.name} → ${r.target.split('/').pop()}`;
+      list.createEl('li', { text });
+    }
+    const row = el.createDiv({ cls: 'modal-button-container' });
+    row.createEl('button', { text: 'Cancel' }).onclick = () => this.close();
+    const go = row.createEl('button', { text: `Rename ${moves.length} Image${moves.length === 1 ? '' : 's'}`, cls: 'mod-cta' });
+    go.disabled = !moves.length;
+    go.onclick = () => { this.close(); this.onConfirm(rows); };
+  }
+}
+
 /* ---------------- settings tab ---------------- */
 
 class ArchImagesSettingTab extends PluginSettingTab {
@@ -926,7 +1112,7 @@ class ArchImagesSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Name Template')
-      .setDesc('Tokens: {{noteName}} {{date}} {{time}} {{year}} {{month}} {{day}} {{counter}} {{originalName}} {{width}} {{height}} {{ms}}')
+      .setDesc('Tokens: {{noteName}} {{date}} {{time}} {{year}} {{month}} {{day}} {{counter}} {{originalName}} {{width}} {{height}} {{ms}}. {{counter}} continues from the highest number already used by an image of that name, so each note counts from 01 on its own.')
       .addText((t) => plainInput(t).setValue(s.nameTemplate).onChange(async (v) => { s.nameTemplate = v; await save(); }));
 
     new Setting(containerEl)

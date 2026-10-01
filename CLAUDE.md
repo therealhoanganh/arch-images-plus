@@ -178,6 +178,23 @@ Note that an excluded folder still gets the **name template**: exclusion is abou
 conversion, not naming. The original bytes and format are kept, and the file is
 still named the way you asked.
 
+## Naming and the counter (0.8.0)
+
+The default template is `{{noteName}} {{counter}}`, his choice. **`{{counter}}` is read
+off the names already in the vault**, not kept in memory: `counterPattern` turns the
+template into a pattern with the counter as `(\d+)`, and the next number is one past
+the highest match in any folder, ignoring case. Until 0.8.0 it was one number for the
+whole session, so the first image in note B came out `B 03` after `A 01` and `A 02`.
+The search covers every folder because two images of one name in different folders
+make a wikilink ambiguous. It costs one pass over the vault's image list per save.
+
+**Rename Images in the Active Note by Their Order** renumbers a note's images to match
+the note. Always previewed; through `fileManager.renameFile`, for the same reason as
+bulk conversion; in two steps through `… arch-renaming` names, so two images can swap
+names. An image another note links to is skipped unless the preview's toggle says
+otherwise, and a name taken by a file outside the note leaves that image alone rather
+than taking `name 1`, which would break the order.
+
 ## Location modes
 
 The default, `obsidian`, defers to `vault.getAvailablePathForAttachments`, which
@@ -358,8 +375,6 @@ The context menus and the bulk preview modal are still unexercised.
 - No setup/detection modal, and with AVIF gone there is no external tool to
   detect. If one is ever needed, lift the `findBinary` / `SetupModal` pair out of
   ARCH YT Playlists rather than writing a new one.
-- `{{counter}}` counts within the session, not per folder or per note. Uniqueness
-  comes from `uniquePath`, so collisions are safe but the numbering restarts.
 - Bulk conversion has never been run on a large vault. It replaces files in
   place; test on a copy first.
 
