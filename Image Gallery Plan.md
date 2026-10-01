@@ -165,6 +165,17 @@ and are left alone.
   Obsidian's own (3,933 files in one folder) and this plugin cannot change it; the
   ways round it are keeping the folder collapsed, or one folder per game, which
   touches Adult Contents, the bases and the cover tool.
+  **Timed the same evening, his report:** the vault's `@IMAGES.base` took about 10
+  seconds to open, and the log read *"drew 2468 images in 933 groups (2468 cards) in
+  5286 ms"*. Timed inside his Obsidian (read only): `getBacklinksForFile` costs 8.3 ms
+  per image, because it scans every note's links (1,778 notes, 9,886 links), so the
+  2,468 images' backlinks take about 20 seconds of lookups; looking up a card's
+  cached size costs 0.004 ms. Both image bases are grouped by `file.backlinks`
+  (`@IMAGES.base`, and `Lewds/H-games/@IMAGES.base` with 3,933 images). **So the
+  first fix is the grouping, not the drawing:** the gallery inverts
+  `metadataCache.resolvedLinks` once (one pass over the links, milliseconds) and groups
+  by the linking note itself, and the bases drop `groupBy: file.backlinks`. Drawing only
+  the groups near the screen comes second.
 - **Test copy on the drive:** `4T-HDD/_Gallery Test/CHAOS Gallery Test` is today's
   CHAOS without video, music and `.git` (2,397 images), with the development build
   installed, `@IMAGES ARCH.base` (the same views, new type) beside `@IMAGES.base`,
