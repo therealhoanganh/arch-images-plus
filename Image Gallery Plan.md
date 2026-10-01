@@ -150,6 +150,21 @@ and are left alone.
   words: *"I could be because of Image Gallery from Arch Image Plus, we will need to
   optimize this later, like to not loads everthing which is 2500 images and tooks
   several seonds to load."* Not started.
+  **What was found, 2026-10-01 (read in the code, not yet timed):** the images
+  themselves already load lazily (a thumbnail only near the screen, let go far from
+  it), so the cost is the drawing: `render()` makes a card for every image at once,
+  3,933 in the H-games base (1.1 GB, median 153 KB), each a `div` and an `img` with
+  four listeners and two IntersectionObserver entries, and the browser lays all of them
+  out. The 1,518-image base drew in about 350 ms on 2026-09-26; at 3,933 that is
+  about a second, plus Bases' own query. **The fix, in two steps:** CSS
+  `content-visibility: auto` on each group (the browser skips layout and paint of
+  groups off screen; small and safe), then drawing only the groups near the screen,
+  with the rest added as they scroll close, sized from the cached image sizes so the
+  scroll bar stays right. Measure `plugin.galleryDraws` before and after, in the
+  CHAOS base. The lag when the `Images` folder is opened in the file explorer is
+  Obsidian's own (3,933 files in one folder) and this plugin cannot change it; the
+  ways round it are keeping the folder collapsed, or one folder per game, which
+  touches Adult Contents, the bases and the cover tool.
 - **Test copy on the drive:** `4T-HDD/_Gallery Test/CHAOS Gallery Test` is today's
   CHAOS without video, music and `.git` (2,397 images), with the development build
   installed, `@IMAGES ARCH.base` (the same views, new type) beside `@IMAGES.base`,
