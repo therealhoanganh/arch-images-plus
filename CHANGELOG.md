@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **`CLAUDE.md` rebuilt** (2026-10-09), in his AI rules rebuild (`~/Documents/AI Rules Rebuild Plan 2026-10-08.md`): Rules, Mistakes and Lessons, Where It Stands, one fact per line, 110 lines from 417. The old file is in `~/Documents/_/TRASH/arch-images-plus/`, and word for word, with every walk-through and measurement, in `~/Documents/_/AI/arch-images-plus/Details.md`. His word on the drafts: "they are straight forward and you can do this job well."
+
 ## 0.9.1 (2026-10-02)
 
 A colon in an image name becomes " - " (or "-" inside a word); it was dropped before. His rule for every ARCH plugin: *"Fix it, we need will need to find what games got ":" replace with blank space too, this need to be a universal rule too too!"* An image is named from its note, whose name cannot hold a colon, so in practice this reaches only a template field that can (Recreations 0.4.4 has the whole account).
